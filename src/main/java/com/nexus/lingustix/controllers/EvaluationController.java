@@ -1,0 +1,4 @@
+package com.nexus.lingustix.controllers;
+
+public class EvaluationController {
+}
