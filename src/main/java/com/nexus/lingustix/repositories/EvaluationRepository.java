@@ -8,4 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface EvaluationRepository extends JpaRepository<Evaluation, UUID> {}
+public interface EvaluationRepository extends JpaRepository<Evaluation, UUID> {
+    Optional<Evaluation> findByCompositionId(UUID compositionId);
+}
