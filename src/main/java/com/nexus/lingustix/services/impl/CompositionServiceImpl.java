@@ -32,7 +32,7 @@ public class CompositionServiceImpl implements CompositionService {
     @Override
     public Composition updateTitle(String id, String title) {
         Composition composition = getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
         composition.setTitle(title);
         return compositionRepository.save(composition);
     }
@@ -40,7 +40,7 @@ public class CompositionServiceImpl implements CompositionService {
     @Override
     public Composition updateContent(String id, String content) {
         Composition composition = getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
         composition.setContent(content);
         return compositionRepository.save(composition);
     }
@@ -57,15 +57,13 @@ public class CompositionServiceImpl implements CompositionService {
 
     @Override
     public Optional<Composition> getByTitle(String title) {
-        return compositionRepository.findAll().stream()
-                .filter(composition -> composition.getTitle().equalsIgnoreCase(title))
-                .findFirst();
+        return compositionRepository.findByTitleIgnoreCase(title);
     }
 
     @Override
     public List<Composition> getByOwner(String ownerId) {
         Account owner = accountRepository.findById(UUID.fromString(ownerId))
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found", "account"));
 
         return owner.getCompositions();
     }

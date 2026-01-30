@@ -19,10 +19,10 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public List<CompositionIndex> searchCompositions(String query, UUID ownerId) {
-        return compositionSearchRepository.findByTitleOrContent(query, query)
-                .stream()
-                .filter(index -> ownerId == null || ownerId.equals(index.getOwnerId()))
-                .toList();
+        if (ownerId == null) {
+            return compositionSearchRepository.findByTitleOrContent(query, query);
+        }
+        return compositionSearchRepository.findByTitleOrContentAndOwnerId(query, query, ownerId);
     }
 
     @Override
