@@ -30,10 +30,7 @@ public class EvaluationServiceImpl implements EvaluationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
 
         // Verify ownership
-        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (composition.getOwner() == null || !composition.getOwner().getId().toString().equals(currentUserId)) {
-            throw new UnauthorizedException("Not authorized to create evaluation for this composition");
-        }
+        verifyCompositionOwnership(composition);
 
         Evaluation evaluation = Evaluation.builder()
                 .composition(composition)
@@ -49,12 +46,7 @@ public class EvaluationServiceImpl implements EvaluationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Evaluation not found"));
         
         // Verify ownership through composition
-        Composition composition = evaluation.getComposition();
-        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (composition == null || composition.getOwner() == null || 
-                !composition.getOwner().getId().toString().equals(currentUserId)) {
-            throw new UnauthorizedException("Not authorized to delete this evaluation");
-        }
+        verifyOwnership(evaluation);
         
         evaluationRepository.deleteById(id);
     }
@@ -79,6 +71,10 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     private void verifyOwnership(Evaluation evaluation) {
         Composition composition = evaluation.getComposition();
+        verifyCompositionOwnership(composition);
+    }
+
+    private void verifyCompositionOwnership(Composition composition) {
         String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (composition == null || composition.getOwner() == null ||
                 !composition.getOwner().getId().toString().equals(currentUserId)) {

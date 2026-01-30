@@ -24,6 +24,7 @@ public class DotenvConfig {
                     .load();
 
             dotenv.entries().forEach(entry -> {
+                // Only set if not already set as system property (command line takes precedence)
                 if (System.getProperty(entry.getKey()) == null) {
                     System.setProperty(entry.getKey(), entry.getValue());
                 }
@@ -35,12 +36,26 @@ public class DotenvConfig {
         }
     }
 
+    /**
+     * Gets a configuration value with the following priority:
+     * 1. System property (command line or .env file)
+     * 2. Environment variable
+     */
+    private static String getConfigValue(String key) {
+        String value = System.getProperty(key);
+        if (value == null) {
+            value = System.getenv(key);
+            // Also set as system property for consistency across the application
+            if (value != null) {
+                System.setProperty(key, value);
+            }
+        }
+        return value;
+    }
+
     @PostConstruct
     public void validateRequiredEnvironmentVariables() {
-        String jwtSecret = System.getProperty("APP_JWT_SECRET");
-        if (jwtSecret == null) {
-            jwtSecret = System.getenv("APP_JWT_SECRET");
-        }
+        String jwtSecret = getConfigValue("APP_JWT_SECRET");
 
         if (jwtSecret == null || jwtSecret.isBlank()) {
             logger.error("Required environment variable APP_JWT_SECRET is missing. " +
