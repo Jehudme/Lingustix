@@ -1,4 +1,50 @@
 package com.nexus.lingustix.controllers;
 
+import com.nexus.lingustix.models.entities.Evaluation;
+import com.nexus.lingustix.services.EvaluationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/evaluations")
+@RequiredArgsConstructor
 public class EvaluationController {
+
+    private final EvaluationService evaluationService;
+
+    @PostMapping
+    public ResponseEntity<Evaluation> create(@RequestParam UUID compositionId) {
+        Evaluation created = evaluationService.create(compositionId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        evaluationService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Evaluation> getById(@PathVariable UUID id) {
+        return evaluationService.getById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/composition/{compositionId}")
+    public ResponseEntity<Evaluation> getByComposition(@PathVariable UUID compositionId) {
+        return evaluationService.getByCompositionId(compositionId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Evaluation>> getAll() {
+        return ResponseEntity.ok(evaluationService.getAll());
+    }
 }
