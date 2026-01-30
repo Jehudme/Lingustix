@@ -9,6 +9,15 @@ import jakarta.persistence.PostUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * JPA Entity Listener that automatically synchronizes the Composition entity
+ * with the Elasticsearch search index. This ensures that the search index
+ * remains consistent with the database without requiring manual reindexing.
+ * 
+ * Note: This uses a static field for the repository because JPA entity listeners
+ * are instantiated by JPA, not Spring. The null check ensures safety during 
+ * application startup before Spring injects the dependency.
+ */
 @Component
 public class CompositionEntityListener {
 
