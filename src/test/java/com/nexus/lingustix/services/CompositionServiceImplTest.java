@@ -28,6 +28,7 @@ class CompositionServiceImplTest {
 
         assertThatThrownBy(() -> service.getByOwner(missing))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Owner not found");
+                .hasMessageContaining("Owner not found")
+                .matches(ex -> ((ResourceNotFoundException) ex).getResource().equals("account"));
     }
 }

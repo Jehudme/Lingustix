@@ -29,4 +29,18 @@ class SearchServiceImplTest {
 
         assertThat(result).containsExactly(owned);
     }
+
+    @Test
+    void searchCompositions_withoutOwnerUsesGenericQuery() {
+        CompositionSearchRepository searchRepository = Mockito.mock(CompositionSearchRepository.class);
+        CompositionRepository compositionRepository = Mockito.mock(CompositionRepository.class);
+        SearchServiceImpl service = new SearchServiceImpl(searchRepository, compositionRepository);
+
+        CompositionIndex any = CompositionIndex.builder().id("2").title("t").content("c").ownerId(null).build();
+        when(searchRepository.findByTitleOrContent("q", "q")).thenReturn(List.of(any));
+
+        List<CompositionIndex> result = service.searchCompositions("q", null);
+
+        assertThat(result).containsExactly(any);
+    }
 }

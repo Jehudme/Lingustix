@@ -45,6 +45,15 @@ public class GlobalExceptionComponent {
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
     }
 
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationException(org.springframework.web.bind.MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .orElse("Validation failed");
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
     private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String message, String resource) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("status", status.value());
