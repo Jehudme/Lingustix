@@ -2,9 +2,8 @@ package com.nexus.lingustix.services;
 
 
 public interface AuthService {
-    String login(String username, String password);
-    void logout(String token);
-
-    boolean validateToken(String token);
+    String generateToken(String username, String password);
     String refreshToken(String token);
+    void revokeToken(String token);
+    boolean validateToken(String token);
 }

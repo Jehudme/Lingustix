@@ -19,10 +19,6 @@ public class Evaluation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private int score;
-
-    private int mistakeCount;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
