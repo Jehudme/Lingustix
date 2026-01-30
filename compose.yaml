@@ -22,7 +22,7 @@ services:
 
   # Elasticsearch Service
   elasticsearch:
-    image: 'docker.elastic.co/elasticsearch/elasticsearch:8.17.0' # Upgrade from 8.12.0
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:9.2.4' # Updated to match Spring Boot 4.0.2 elasticsearch-java 9.2.3
     container_name: lingustix-search
     environment:
       - 'discovery.type=single-node'
