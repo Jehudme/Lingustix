@@ -7,6 +7,7 @@ import com.nexus.lingustix.services.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -56,6 +57,7 @@ public class AccountController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AccountResponse>> getAll() {
         return ResponseEntity.ok(accountService.getAll().stream().map(AccountResponse::from).toList());
     }

@@ -90,6 +90,15 @@ public class CompositionServiceImpl implements CompositionService {
     }
 
     @Override
+    public Optional<Composition> getByIdForCurrentUser(UUID id) {
+        Optional<Composition> composition = compositionRepository.findById(id);
+        if (composition.isPresent()) {
+            verifyOwnership(composition.get());
+        }
+        return composition;
+    }
+
+    @Override
     public Optional<Composition> getByTitle(String title) {
         return compositionRepository.findByTitleIgnoreCase(title);
     }

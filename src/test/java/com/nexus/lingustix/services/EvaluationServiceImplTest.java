@@ -1,5 +1,6 @@
 package com.nexus.lingustix.services;
 
+import com.nexus.lingustix.components.GlobalExceptionComponent.ResourceNotFoundException;
 import com.nexus.lingustix.components.GlobalExceptionComponent.UnauthorizedException;
 import com.nexus.lingustix.models.entities.Account;
 import com.nexus.lingustix.models.entities.Composition;
@@ -21,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class EvaluationServiceImplTest {
@@ -96,5 +98,61 @@ class EvaluationServiceImplTest {
         assertThatThrownBy(() -> service.create(compositionId))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessageContaining("Not authorized");
+    }
+
+    @Test
+    void delete_allowsOwnerToDeleteEvaluation() {
+        UUID ownerId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        UUID evaluationId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("testuser").email("test@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+        Evaluation evaluation = Evaluation.builder().id(evaluationId).composition(composition).build();
+
+        when(evaluationRepository.findById(evaluationId)).thenReturn(Optional.of(evaluation));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(ownerId.toString(), null, new ArrayList<>())
+        );
+
+        service.delete(evaluationId);
+        verify(evaluationRepository).deleteById(evaluationId);
+    }
+
+    @Test
+    void delete_throwsWhenUserDoesNotOwnComposition() {
+        UUID ownerId = UUID.randomUUID();
+        UUID differentUserId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        UUID evaluationId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("owner").email("owner@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+        Evaluation evaluation = Evaluation.builder().id(evaluationId).composition(composition).build();
+
+        when(evaluationRepository.findById(evaluationId)).thenReturn(Optional.of(evaluation));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(differentUserId.toString(), null, new ArrayList<>())
+        );
+
+        assertThatThrownBy(() -> service.delete(evaluationId))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("Not authorized");
+    }
+
+    @Test
+    void delete_throwsWhenEvaluationNotFound() {
+        UUID evaluationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        when(evaluationRepository.findById(evaluationId)).thenReturn(Optional.empty());
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userId.toString(), null, new ArrayList<>())
+        );
+
+        assertThatThrownBy(() -> service.delete(evaluationId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Evaluation not found");
     }
 }

@@ -50,7 +50,7 @@ public class CompositionController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CompositionResponse> getById(@PathVariable UUID id) {
-        return compositionService.getById(id)
+        return compositionService.getByIdForCurrentUser(id)
                 .map(CompositionResponse::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
