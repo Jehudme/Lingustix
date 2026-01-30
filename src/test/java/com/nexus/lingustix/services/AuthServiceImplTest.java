@@ -36,7 +36,7 @@ class AuthServiceImplTest {
         jwtComponent = Mockito.mock(JwtComponent.class);
 
         authService = new AuthServiceImpl(jwtComponent, accountRepository, revokedTokenRepository, passwordEncoder);
-        authService.expirationMs = 1000L;
+        authService.setExpirationMs(1000L);
     }
 
     @Test
@@ -49,12 +49,28 @@ class AuthServiceImplTest {
                 .build();
         when(accountRepository.findByEmail("user")).thenReturn(Optional.of(account));
         when(passwordEncoder.matches("pass", "hashed")).thenReturn(true);
-        when(jwtComponent.createToken(any(), any(), any())).thenReturn("jwt");
+        when(jwtComponent.createToken(any(), any(), Mockito.anyLong())).thenReturn("jwt");
 
         var result = authService.generateToken("user", "pass");
 
         assertThat(result.token()).isEqualTo("jwt");
         assertThat(result.expirationDate()).isAfter(LocalDateTime.now());
+    }
+
+    @Test
+    void generateToken_throwsWhenPasswordDoesNotMatch() {
+        Account account = Account.builder()
+                .id(UUID.randomUUID())
+                .username("user")
+                .email("mail@test.com")
+                .hashedPassword("hashed")
+                .build();
+        when(accountRepository.findByEmail("user")).thenReturn(Optional.of(account));
+        when(passwordEncoder.matches("wrongpass", "hashed")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.generateToken("user", "wrongpass"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid credentials");
     }
 
     @Test

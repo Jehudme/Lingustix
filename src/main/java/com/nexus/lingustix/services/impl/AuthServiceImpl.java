@@ -8,11 +8,13 @@ import com.nexus.lingustix.repositories.AccountRepository;
 import com.nexus.lingustix.repositories.RevokedTokenRepository;
 import com.nexus.lingustix.services.AuthService;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +23,7 @@ import java.util.Map;
 public class AuthServiceImpl implements AuthService {
 
     @Value("${app.jwt.expiration-ms}")
+    @Setter
     private long expirationMs;
 
     private final JwtComponent jwtComponent;
@@ -43,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
         claims.put("email", account.getEmail());
 
         String token = jwtComponent.createToken(claims, account.getId().toString(), expirationMs);
-        return new TokenWithExpiry(token, LocalDateTime.now().plusNanos(expirationMs * 1_000_000));
+        return new TokenWithExpiry(token, LocalDateTime.now().plus(expirationMs, ChronoUnit.MILLIS));
     }
 
     @Override
@@ -63,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         claims.put("email", account.getEmail());
 
         String newToken = jwtComponent.createToken(claims, account.getId().toString(), expirationMs);
-        return new TokenWithExpiry(newToken, LocalDateTime.now().plusNanos(expirationMs * 1_000_000));
+        return new TokenWithExpiry(newToken, LocalDateTime.now().plus(expirationMs, ChronoUnit.MILLIS));
     }
 
     @Override
@@ -71,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
         if (!jwtComponent.isTokenValid(token)) {
             throw new BadRequestException("Invalid token");
         }
-        revokedTokenRepository.save(new RevokedToken(token, LocalDateTime.now().plusSeconds(expirationMs / 1000)));
+        revokedTokenRepository.save(new RevokedToken(token, LocalDateTime.now().plus(expirationMs, ChronoUnit.MILLIS)));
     }
 
     @Override

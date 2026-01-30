@@ -1,12 +1,14 @@
 package com.nexus.lingustix.services.impl;
 
 import com.nexus.lingustix.components.GlobalExceptionComponent.ResourceNotFoundException;
+import com.nexus.lingustix.components.GlobalExceptionComponent.UnauthorizedException;
 import com.nexus.lingustix.models.entities.Composition;
 import com.nexus.lingustix.models.entities.Evaluation;
 import com.nexus.lingustix.repositories.CompositionRepository;
 import com.nexus.lingustix.repositories.EvaluationRepository;
 import com.nexus.lingustix.services.EvaluationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +26,12 @@ public class EvaluationServiceImpl implements EvaluationService {
     public Evaluation create(UUID compositionId) {
         Composition composition = compositionRepository.findById(compositionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
+
+        // Verify ownership
+        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (composition.getOwner() == null || !composition.getOwner().getId().toString().equals(currentUserId)) {
+            throw new UnauthorizedException("Not authorized to create evaluation for this composition");
+        }
 
         Evaluation evaluation = Evaluation.builder()
                 .composition(composition)
