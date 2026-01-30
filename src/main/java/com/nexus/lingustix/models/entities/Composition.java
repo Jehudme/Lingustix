@@ -24,7 +24,7 @@ public class Composition {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @OneToOne(mappedBy = "text", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "composition", cascade = CascadeType.ALL, orphanRemoval = true)
     private Evaluation evaluation;
 
     @ManyToOne(fetch = FetchType.LAZY)

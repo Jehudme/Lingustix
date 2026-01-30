@@ -1,6 +1,6 @@
 package com.nexus.lingustix.configurations;
 
-import com.nexus.lingustix.components.JwtAuthenticationComponent;
+import com.nexus.lingustix.components.JwtAuthComponent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationComponent jwtAuthFilter;
+    private final JwtAuthComponent jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

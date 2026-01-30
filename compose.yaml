@@ -1,9 +1,38 @@
 services:
+  # PostgreSQL Database Service
   postgres:
-    image: 'postgres:latest'
+    image: 'postgres:16-alpine'
+    container_name: lingustix-db
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      - 'POSTGRES_DB=lingustix_db'
+      - 'POSTGRES_USER=postgres'
+      - 'POSTGRES_PASSWORD=password'
     ports:
-      - '5432'
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # LanguageTool Server Service
+  languagetool:
+    image: 'erikvl87/languagetool'
+    container_name: lingustix-languagetool
+    ports:
+      - '8081:8010'
+    restart: unless-stopped
+
+  # Elasticsearch Service
+  elasticsearch:
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:8.17.0' # Upgrade from 8.12.0
+    container_name: lingustix-search
+    environment:
+      - 'discovery.type=single-node'
+      - 'xpack.security.enabled=false'
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    ports:
+      - '9200:9200'
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+volumes:
+  postgres_data:
+  es_data:

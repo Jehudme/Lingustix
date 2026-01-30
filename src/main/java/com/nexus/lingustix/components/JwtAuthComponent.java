@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthenticationComponent extends OncePerRequestFilter {
+public class JwtAuthComponent extends OncePerRequestFilter {
 
     private final JwtComponent jwtComponent;
     private final RevokedTokenRepository revokedTokenRepository;

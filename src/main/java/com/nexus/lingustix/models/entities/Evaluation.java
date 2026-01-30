@@ -19,7 +19,9 @@ public class Evaluation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private int wordCount;
+    private int score;
+
+    private int mistakeCount;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -28,16 +30,12 @@ public class Evaluation {
     @JoinColumn(name = "text_id")
     private Composition composition;
 
-    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "evaluation", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Correction> corrections = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    public double calculateMistakePerWord() {
-        return corrections.size() / (double) wordCount;
     }
 }

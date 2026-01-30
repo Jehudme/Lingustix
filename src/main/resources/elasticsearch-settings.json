@@ -1,0 +1,25 @@
+{
+  "analysis": {
+    "analyzer": {
+      "english_analyzer": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "word_delimiter_graph",
+          "lowercase",
+          "asciifolding",
+          "snowball"
+        ]
+      }
+    },
+    "normalizer": {
+      "lowercase_normalizer": {
+        "type": "custom",
+        "filter": [
+          "lowercase",
+          "asciifolding"
+        ]
+      }
+    }
+  }
+}
