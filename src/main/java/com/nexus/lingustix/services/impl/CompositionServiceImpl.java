@@ -28,9 +28,14 @@ public class CompositionServiceImpl implements CompositionService {
     @Override
     @Transactional
     public Composition create(String title) {
+        String currentUserId = getCurrentUserId();
+        Account owner = accountRepository.findById(UUID.fromString(currentUserId))
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+        
         Composition composition = Composition.builder()
                 .title(title)
                 .content("")
+                .owner(owner)
                 .build();
         return compositionRepository.save(composition);
     }
@@ -65,10 +70,18 @@ public class CompositionServiceImpl implements CompositionService {
     }
 
     private void verifyOwnership(Composition composition) {
-        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String currentUserId = getCurrentUserId();
         if (composition.getOwner() == null || !composition.getOwner().getId().toString().equals(currentUserId)) {
             throw new UnauthorizedException("Not authorized to access this composition");
         }
+    }
+
+    private String getCurrentUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        return (String) authentication.getPrincipal();
     }
 
     @Override

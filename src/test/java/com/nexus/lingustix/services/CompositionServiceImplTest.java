@@ -145,4 +145,43 @@ class CompositionServiceImplTest {
         service.delete(compositionId);
         verify(compositionRepository).deleteById(compositionId);
     }
+
+    @Test
+    void create_assignsOwnerToComposition() {
+        UUID ownerId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("testuser").email("test@example.com").build();
+        
+        when(accountRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+        when(compositionRepository.save(any(Composition.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(ownerId.toString(), null, new ArrayList<>())
+        );
+
+        Composition result = service.create("Test Title");
+        assertThat(result.getOwner()).isEqualTo(owner);
+        assertThat(result.getTitle()).isEqualTo("Test Title");
+        verify(compositionRepository).save(any(Composition.class));
+    }
+
+    @Test
+    void create_throwsWhenUserNotAuthenticated() {
+        // No authentication set
+        assertThatThrownBy(() -> service.create("Test Title"))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("User not authenticated");
+    }
+
+    @Test
+    void updateTitle_throwsWhenUserNotAuthenticated() {
+        UUID compositionId = UUID.randomUUID();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").build();
+        
+        when(compositionRepository.findById(compositionId)).thenReturn(Optional.of(composition));
+
+        // No authentication set
+        assertThatThrownBy(() -> service.updateTitle(compositionId, "New Title"))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("User not authenticated");
+    }
 }

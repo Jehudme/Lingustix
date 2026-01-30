@@ -1,5 +1,6 @@
 package com.nexus.lingustix.controllers;
 
+import com.nexus.lingustix.components.GlobalExceptionComponent.UnauthorizedException;
 import com.nexus.lingustix.models.entities.Composition;
 import com.nexus.lingustix.models.requests.CompositionCreateRequest;
 import com.nexus.lingustix.models.requests.CompositionUpdateContentRequest;
@@ -57,8 +58,15 @@ public class CompositionController {
 
     @GetMapping
     public ResponseEntity<Page<CompositionResponse>> getAll(@PageableDefault(size = 20) Pageable pageable) {
-        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UUID ownerId = UUID.fromString(currentUserId);
+        UUID ownerId = UUID.fromString(getCurrentUserId());
         return ResponseEntity.ok(compositionService.getByOwner(ownerId, pageable).map(CompositionResponse::from));
+    }
+
+    private String getCurrentUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        return (String) authentication.getPrincipal();
     }
 }
