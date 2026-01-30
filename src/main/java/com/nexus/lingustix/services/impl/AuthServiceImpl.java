@@ -29,7 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
-    public String generateToken(String identifier, String password) {
+    public TokenWithExpiry generateToken(String identifier, String password) {
         Account account = accountRepository.findByEmail(identifier)
                 .or(() -> accountRepository.findByUsername(identifier))
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
@@ -42,12 +42,16 @@ public class AuthServiceImpl implements AuthService {
         claims.put("username", account.getUsername());
         claims.put("email", account.getEmail());
 
-        return jwtComponent.createToken(claims, account.getId().toString(), expirationMs);
+        String token = jwtComponent.createToken(claims, account.getId().toString(), expirationMs);
+        return new TokenWithExpiry(token, LocalDateTime.now().plusNanos(expirationMs * 1_000_000));
     }
 
     @Override
-    public String refreshToken(String token) {
+    public TokenWithExpiry refreshToken(String token) {
         if (!jwtComponent.isTokenValid(token)) {
+            throw new BadRequestException("Invalid token");
+        }
+        if (revokedTokenRepository.existsByToken(token)) {
             throw new BadRequestException("Invalid token");
         }
         String userId = jwtComponent.extractSubject(token);
@@ -58,7 +62,8 @@ public class AuthServiceImpl implements AuthService {
         claims.put("username", account.getUsername());
         claims.put("email", account.getEmail());
 
-        return jwtComponent.createToken(claims, account.getId().toString(), expirationMs);
+        String newToken = jwtComponent.createToken(claims, account.getId().toString(), expirationMs);
+        return new TokenWithExpiry(newToken, LocalDateTime.now().plusNanos(expirationMs * 1_000_000));
     }
 
     @Override

@@ -30,42 +30,40 @@ public class CompositionServiceImpl implements CompositionService {
     }
 
     @Override
-    public Composition updateTitle(String id, String title) {
+    public Composition updateTitle(UUID id, String title) {
         Composition composition = getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
         composition.setTitle(title);
         return compositionRepository.save(composition);
     }
 
     @Override
-    public Composition updateContent(String id, String content) {
+    public Composition updateContent(UUID id, String content) {
         Composition composition = getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
         composition.setContent(content);
         return compositionRepository.save(composition);
     }
 
     @Override
-    public void delete(String id) {
-        compositionRepository.deleteById(UUID.fromString(id));
+    public void delete(UUID id) {
+        compositionRepository.deleteById(id);
     }
 
     @Override
-    public Optional<Composition> getById(String id) {
-        return compositionRepository.findById(UUID.fromString(id));
+    public Optional<Composition> getById(UUID id) {
+        return compositionRepository.findById(id);
     }
 
     @Override
     public Optional<Composition> getByTitle(String title) {
-        return compositionRepository.findAll().stream()
-                .filter(composition -> composition.getTitle().equalsIgnoreCase(title))
-                .findFirst();
+        return compositionRepository.findByTitleIgnoreCase(title);
     }
 
     @Override
-    public List<Composition> getByOwner(String ownerId) {
-        Account owner = accountRepository.findById(UUID.fromString(ownerId))
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+    public List<Composition> getByOwner(UUID ownerId) {
+        Account owner = accountRepository.findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found", "account"));
 
         return owner.getCompositions();
     }

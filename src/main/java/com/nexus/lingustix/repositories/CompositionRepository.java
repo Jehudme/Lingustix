@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 
 @Repository
-public interface CompositionRepository extends JpaRepository<Composition, UUID> {}
+public interface CompositionRepository extends JpaRepository<Composition, UUID> {
+    Optional<Composition> findByTitleIgnoreCase(String title);
+}
