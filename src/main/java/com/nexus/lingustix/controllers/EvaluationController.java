@@ -1,7 +1,9 @@
 package com.nexus.lingustix.controllers;
 
 import com.nexus.lingustix.models.entities.Evaluation;
+import com.nexus.lingustix.models.requests.EvaluationCreateRequest;
 import com.nexus.lingustix.services.EvaluationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +20,8 @@ public class EvaluationController {
     private final EvaluationService evaluationService;
 
     @PostMapping
-    public ResponseEntity<Evaluation> create(@RequestParam UUID compositionId) {
-        Evaluation created = evaluationService.create(compositionId);
+    public ResponseEntity<Evaluation> create(@Valid @RequestBody EvaluationCreateRequest request) {
+        Evaluation created = evaluationService.create(request.compositionId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
