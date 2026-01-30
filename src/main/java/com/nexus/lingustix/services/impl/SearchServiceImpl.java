@@ -5,6 +5,8 @@ import com.nexus.lingustix.repositories.CompositionRepository;
 import com.nexus.lingustix.repositories.CompositionSearchRepository;
 import com.nexus.lingustix.services.SearchService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +25,14 @@ public class SearchServiceImpl implements SearchService {
             return compositionSearchRepository.findByTitleOrContent(query, query);
         }
         return compositionSearchRepository.findByTitleOrContentAndOwnerId(query, query, ownerId);
+    }
+
+    @Override
+    public Page<CompositionIndex> searchCompositions(String query, UUID ownerId, Pageable pageable) {
+        if (ownerId == null) {
+            return compositionSearchRepository.findByTitleOrContent(query, query, pageable);
+        }
+        return compositionSearchRepository.findByTitleOrContentAndOwnerId(query, query, ownerId, pageable);
     }
 
     @Override

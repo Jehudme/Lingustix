@@ -7,12 +7,15 @@ import com.nexus.lingustix.models.requests.CompositionUpdateTitleRequest;
 import com.nexus.lingustix.models.responses.CompositionResponse;
 import com.nexus.lingustix.services.CompositionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -53,7 +56,9 @@ public class CompositionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CompositionResponse>> getAll() {
-        return ResponseEntity.ok(compositionService.getAll().stream().map(CompositionResponse::from).toList());
+    public ResponseEntity<Page<CompositionResponse>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UUID ownerId = UUID.fromString(currentUserId);
+        return ResponseEntity.ok(compositionService.getByOwner(ownerId, pageable).map(CompositionResponse::from));
     }
 }
