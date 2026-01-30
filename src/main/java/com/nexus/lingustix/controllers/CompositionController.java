@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/compositions")
@@ -28,23 +29,23 @@ public class CompositionController {
     }
 
     @PatchMapping("/{id}/title")
-    public ResponseEntity<CompositionResponse> updateTitle(@PathVariable String id, @Valid @RequestBody CompositionUpdateTitleRequest request) {
+    public ResponseEntity<CompositionResponse> updateTitle(@PathVariable UUID id, @Valid @RequestBody CompositionUpdateTitleRequest request) {
         return ResponseEntity.ok(CompositionResponse.from(compositionService.updateTitle(id, request.title())));
     }
 
     @PatchMapping("/{id}/content")
-    public ResponseEntity<CompositionResponse> updateContent(@PathVariable String id, @Valid @RequestBody CompositionUpdateContentRequest request) {
+    public ResponseEntity<CompositionResponse> updateContent(@PathVariable UUID id, @Valid @RequestBody CompositionUpdateContentRequest request) {
         return ResponseEntity.ok(CompositionResponse.from(compositionService.updateContent(id, request.content())));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
         compositionService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CompositionResponse> getById(@PathVariable String id) {
+    public ResponseEntity<CompositionResponse> getById(@PathVariable UUID id) {
         return compositionService.getById(id)
                 .map(CompositionResponse::from)
                 .map(ResponseEntity::ok)
