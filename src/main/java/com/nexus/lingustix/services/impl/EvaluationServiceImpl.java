@@ -61,12 +61,29 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     @Override
     public Optional<Evaluation> getById(UUID id) {
-        return evaluationRepository.findById(id);
+        Optional<Evaluation> evaluation = evaluationRepository.findById(id);
+        if (evaluation.isPresent()) {
+            verifyOwnership(evaluation.get());
+        }
+        return evaluation;
     }
 
     @Override
     public Optional<Evaluation> getByCompositionId(UUID compositionId) {
-        return evaluationRepository.findByCompositionId(compositionId);
+        Optional<Evaluation> evaluation = evaluationRepository.findByCompositionId(compositionId);
+        if (evaluation.isPresent()) {
+            verifyOwnership(evaluation.get());
+        }
+        return evaluation;
+    }
+
+    private void verifyOwnership(Evaluation evaluation) {
+        Composition composition = evaluation.getComposition();
+        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (composition == null || composition.getOwner() == null ||
+                !composition.getOwner().getId().toString().equals(currentUserId)) {
+            throw new UnauthorizedException("Not authorized to access this evaluation");
+        }
     }
 
     @Override

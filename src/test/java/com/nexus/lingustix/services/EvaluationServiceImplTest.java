@@ -155,4 +155,116 @@ class EvaluationServiceImplTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Evaluation not found");
     }
+
+    @Test
+    void getById_allowsOwnerToGetEvaluation() {
+        UUID ownerId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        UUID evaluationId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("testuser").email("test@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+        Evaluation evaluation = Evaluation.builder().id(evaluationId).composition(composition).build();
+
+        when(evaluationRepository.findById(evaluationId)).thenReturn(Optional.of(evaluation));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(ownerId.toString(), null, new ArrayList<>())
+        );
+
+        Optional<Evaluation> result = service.getById(evaluationId);
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(evaluationId);
+    }
+
+    @Test
+    void getById_throwsWhenUserDoesNotOwnComposition() {
+        UUID ownerId = UUID.randomUUID();
+        UUID differentUserId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        UUID evaluationId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("owner").email("owner@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+        Evaluation evaluation = Evaluation.builder().id(evaluationId).composition(composition).build();
+
+        when(evaluationRepository.findById(evaluationId)).thenReturn(Optional.of(evaluation));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(differentUserId.toString(), null, new ArrayList<>())
+        );
+
+        assertThatThrownBy(() -> service.getById(evaluationId))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("Not authorized");
+    }
+
+    @Test
+    void getById_returnsEmptyWhenNotFound() {
+        UUID evaluationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        when(evaluationRepository.findById(evaluationId)).thenReturn(Optional.empty());
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userId.toString(), null, new ArrayList<>())
+        );
+
+        Optional<Evaluation> result = service.getById(evaluationId);
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getByCompositionId_allowsOwnerToGetEvaluation() {
+        UUID ownerId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        UUID evaluationId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("testuser").email("test@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+        Evaluation evaluation = Evaluation.builder().id(evaluationId).composition(composition).build();
+
+        when(evaluationRepository.findByCompositionId(compositionId)).thenReturn(Optional.of(evaluation));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(ownerId.toString(), null, new ArrayList<>())
+        );
+
+        Optional<Evaluation> result = service.getByCompositionId(compositionId);
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(evaluationId);
+    }
+
+    @Test
+    void getByCompositionId_throwsWhenUserDoesNotOwnComposition() {
+        UUID ownerId = UUID.randomUUID();
+        UUID differentUserId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        UUID evaluationId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("owner").email("owner@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+        Evaluation evaluation = Evaluation.builder().id(evaluationId).composition(composition).build();
+
+        when(evaluationRepository.findByCompositionId(compositionId)).thenReturn(Optional.of(evaluation));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(differentUserId.toString(), null, new ArrayList<>())
+        );
+
+        assertThatThrownBy(() -> service.getByCompositionId(compositionId))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("Not authorized");
+    }
+
+    @Test
+    void getByCompositionId_returnsEmptyWhenNotFound() {
+        UUID compositionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        when(evaluationRepository.findByCompositionId(compositionId)).thenReturn(Optional.empty());
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userId.toString(), null, new ArrayList<>())
+        );
+
+        Optional<Evaluation> result = service.getByCompositionId(compositionId);
+        assertThat(result).isEmpty();
+    }
 }
