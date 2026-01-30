@@ -12,7 +12,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = "compositions")
+@Document(indexName = "compositions", createIndex = false)
 @Setting(settingPath = "elasticsearch-settings.json")
 public class CompositionIndex {
 
