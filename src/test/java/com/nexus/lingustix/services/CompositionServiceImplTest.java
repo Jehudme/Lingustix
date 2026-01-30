@@ -184,4 +184,56 @@ class CompositionServiceImplTest {
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessageContaining("User not authenticated");
     }
+
+    @Test
+    void getByIdForCurrentUser_returnsCompositionWhenOwner() {
+        UUID ownerId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("testuser").email("test@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+
+        when(compositionRepository.findById(compositionId)).thenReturn(Optional.of(composition));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(ownerId.toString(), null, new ArrayList<>())
+        );
+
+        Optional<Composition> result = service.getByIdForCurrentUser(compositionId);
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(compositionId);
+    }
+
+    @Test
+    void getByIdForCurrentUser_throwsWhenUserDoesNotOwnComposition() {
+        UUID ownerId = UUID.randomUUID();
+        UUID differentUserId = UUID.randomUUID();
+        UUID compositionId = UUID.randomUUID();
+        Account owner = Account.builder().id(ownerId).username("owner").email("owner@example.com").build();
+        Composition composition = Composition.builder().id(compositionId).title("Test").content("content").owner(owner).build();
+
+        when(compositionRepository.findById(compositionId)).thenReturn(Optional.of(composition));
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(differentUserId.toString(), null, new ArrayList<>())
+        );
+
+        assertThatThrownBy(() -> service.getByIdForCurrentUser(compositionId))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("Not authorized");
+    }
+
+    @Test
+    void getByIdForCurrentUser_returnsEmptyWhenCompositionNotFound() {
+        UUID compositionId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        when(compositionRepository.findById(compositionId)).thenReturn(Optional.empty());
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userId.toString(), null, new ArrayList<>())
+        );
+
+        Optional<Composition> result = service.getByIdForCurrentUser(compositionId);
+        assertThat(result).isEmpty();
+    }
 }

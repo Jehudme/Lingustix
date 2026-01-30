@@ -15,6 +15,7 @@ public interface CompositionService {
     void delete(UUID id);
 
     Optional<Composition> getById(UUID id);
+    Optional<Composition> getByIdForCurrentUser(UUID id);
     Optional<Composition> getByTitle(String title);
     List<Composition> getByOwner(UUID ownerId);
     Page<Composition> getByOwner(UUID ownerId, Pageable pageable);

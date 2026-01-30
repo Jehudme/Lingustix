@@ -10,6 +10,7 @@ import com.nexus.lingustix.services.EvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     private final CompositionRepository compositionRepository;
 
     @Override
+    @Transactional
     public Evaluation create(UUID compositionId) {
         Composition composition = compositionRepository.findById(compositionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
@@ -41,6 +43,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         evaluationRepository.deleteById(id);
     }
