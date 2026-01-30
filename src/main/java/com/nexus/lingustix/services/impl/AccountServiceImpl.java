@@ -2,10 +2,12 @@ package com.nexus.lingustix.services.impl;
 
 import com.nexus.lingustix.components.GlobalExceptionComponent.ConflictException;
 import com.nexus.lingustix.components.GlobalExceptionComponent.ResourceNotFoundException;
+import com.nexus.lingustix.components.GlobalExceptionComponent.UnauthorizedException;
 import com.nexus.lingustix.models.entities.Account;
 import com.nexus.lingustix.repositories.AccountRepository;
 import com.nexus.lingustix.services.AccountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public Account updateEmail(UUID id, String newEmail) {
+        verifyOwnership(id);
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
@@ -54,6 +57,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public Account updatePassword(UUID id, String newPassword) {
+        verifyOwnership(id);
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
@@ -64,6 +68,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public Account updateUsername(UUID id, String newUsername) {
+        verifyOwnership(id);
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
 
@@ -74,7 +79,23 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public void delete(UUID id) {
+        verifyOwnership(id);
         accountRepository.deleteById(id);
+    }
+
+    private void verifyOwnership(UUID id) {
+        String currentUserId = getCurrentUserId();
+        if (!id.toString().equals(currentUserId)) {
+            throw new UnauthorizedException("Not authorized to access this account");
+        }
+    }
+
+    private String getCurrentUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        return (String) authentication.getPrincipal();
     }
 
     @Override
