@@ -1,5 +1,6 @@
 package com.nexus.lingustix.controllers;
 
+import com.nexus.lingustix.components.GlobalExceptionComponent.UnauthorizedException;
 import com.nexus.lingustix.models.entities.Composition;
 import com.nexus.lingustix.models.requests.CompositionCreateRequest;
 import com.nexus.lingustix.models.requests.CompositionUpdateContentRequest;
@@ -7,12 +8,15 @@ import com.nexus.lingustix.models.requests.CompositionUpdateTitleRequest;
 import com.nexus.lingustix.models.responses.CompositionResponse;
 import com.nexus.lingustix.services.CompositionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -53,7 +57,16 @@ public class CompositionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CompositionResponse>> getAll() {
-        return ResponseEntity.ok(compositionService.getAll().stream().map(CompositionResponse::from).toList());
+    public ResponseEntity<Page<CompositionResponse>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+        UUID ownerId = UUID.fromString(getCurrentUserId());
+        return ResponseEntity.ok(compositionService.getByOwner(ownerId, pageable).map(CompositionResponse::from));
+    }
+
+    private String getCurrentUserId() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        return (String) authentication.getPrincipal();
     }
 }

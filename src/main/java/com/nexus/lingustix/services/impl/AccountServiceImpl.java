@@ -8,6 +8,7 @@ import com.nexus.lingustix.services.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public class AccountServiceImpl implements AccountService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public Account create(String username, String email, String password) {
         if (accountRepository.findByEmail(email).isPresent()) {
             throw new ConflictException("Email already in use");
@@ -40,6 +42,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public Account updateEmail(UUID id, String newEmail) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
@@ -49,6 +52,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public Account updatePassword(UUID id, String newPassword) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
@@ -58,6 +62,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public Account updateUsername(UUID id, String newUsername) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
@@ -67,6 +72,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public void delete(UUID id) {
         accountRepository.deleteById(id);
     }

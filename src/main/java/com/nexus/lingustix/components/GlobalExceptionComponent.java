@@ -40,6 +40,11 @@ public class GlobalExceptionComponent {
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
     }
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException exception) {
+        return buildErrorResponse(HttpStatus.FORBIDDEN, exception.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception exception) {
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
