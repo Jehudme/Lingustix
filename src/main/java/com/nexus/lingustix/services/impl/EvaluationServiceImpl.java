@@ -45,6 +45,17 @@ public class EvaluationServiceImpl implements EvaluationService {
     @Override
     @Transactional
     public void delete(UUID id) {
+        Evaluation evaluation = evaluationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Evaluation not found"));
+        
+        // Verify ownership through composition
+        Composition composition = evaluation.getComposition();
+        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (composition == null || composition.getOwner() == null || 
+                !composition.getOwner().getId().toString().equals(currentUserId)) {
+            throw new UnauthorizedException("Not authorized to delete this evaluation");
+        }
+        
         evaluationRepository.deleteById(id);
     }
 
