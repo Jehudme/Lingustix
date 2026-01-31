@@ -8,6 +8,7 @@ interface EditorState {
   corrections: Correction[];
   isSaving: boolean;
   isEvaluating: boolean;
+  isLiveMode: boolean;
   lastSaved: Date | null;
   hasUnsavedChanges: boolean;
   error: string | null;
@@ -18,7 +19,8 @@ interface EditorActions {
   setContent: (content: string) => void;
   saveContent: () => Promise<void>;
   updateTitle: (title: string) => Promise<void>;
-  evaluateContent: () => Promise<void>;
+  evaluateContent: (signal?: AbortSignal) => Promise<void>;
+  setLiveMode: (enabled: boolean) => void;
   clearCorrections: () => void;
   reset: () => void;
   setError: (error: string | null) => void;
@@ -32,6 +34,7 @@ const initialState: EditorState = {
   corrections: [],
   isSaving: false,
   isEvaluating: false,
+  isLiveMode: false,
   lastSaved: null,
   hasUnsavedChanges: false,
   error: null,
@@ -95,18 +98,31 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     }
   },
 
-  evaluateContent: async () => {
+  evaluateContent: async (signal?: AbortSignal) => {
     const { composition, isEvaluating } = get();
     if (!composition || isEvaluating) return;
 
     set({ isEvaluating: true, error: null });
     try {
-      const corrections = await evaluationApi.create({ compositionId: composition.id });
+      const corrections = await evaluationApi.create({ compositionId: composition.id }, signal);
       set({ corrections, isEvaluating: false });
     } catch (error) {
+      // Don't set error state if the request was aborted
+      if (error instanceof Error && error.name === 'CanceledError') {
+        set({ isEvaluating: false });
+        return;
+      }
       const errorMessage = error instanceof Error ? error.message : 'Failed to evaluate';
       set({ error: errorMessage, isEvaluating: false });
       throw error;
+    }
+  },
+
+  setLiveMode: (enabled: boolean) => {
+    set({ isLiveMode: enabled });
+    // Clear corrections when disabling live mode
+    if (!enabled) {
+      set({ corrections: [] });
     }
   },
 

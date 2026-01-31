@@ -102,8 +102,8 @@ export const compositionApi = {
 
 // Evaluation API
 export const evaluationApi = {
-  create: async (data: EvaluationCreateRequest): Promise<Correction[]> => {
-    const response = await apiClient.post<Correction[]>('/evaluations', data);
+  create: async (data: EvaluationCreateRequest, signal?: AbortSignal): Promise<Correction[]> => {
+    const response = await apiClient.post<Correction[]>('/evaluations', data, { signal });
     return response.data;
   },
 };
