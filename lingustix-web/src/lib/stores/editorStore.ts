@@ -104,10 +104,11 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   evaluateContent: async (signal?: AbortSignal) => {
     const { composition, isEvaluating, hasUnsavedChanges, content, isSaving } = get();
-    if (!composition || isEvaluating) return;
+    // Prevent concurrent evaluation or save operations
+    if (!composition || isEvaluating || isSaving) return;
 
     // Save first if there are unsaved changes
-    if (hasUnsavedChanges && !isSaving) {
+    if (hasUnsavedChanges) {
       set({ isSaving: true, error: null });
       try {
         const updated = await compositionApi.updateContent(composition.id, { content });

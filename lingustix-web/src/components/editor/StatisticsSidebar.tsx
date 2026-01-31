@@ -1,13 +1,23 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useEditorStore, calculateWordCount, calculateCharacterCount, calculateReadingTime, calculateErrorDensity } from '@/lib/stores';
 import { AlertCircle, FileText, Clock, Hash } from 'lucide-react';
 import type { Correction } from '@/types';
 
+// Helper function to calculate the end offset of a correction
+const getCorrectionEndOffset = (correction: Correction): number => {
+  return correction.startOffset + correction.length;
+};
+
 export function StatisticsSidebar() {
   const { content, corrections, isLiveMode, focusAtPosition } = useEditorStore();
+
+  // Handle clicking on a correction card to focus the editor at the issue position
+  const handleCorrectionClick = useCallback((correction: Correction) => {
+    focusAtPosition(correction.startOffset, getCorrectionEndOffset(correction));
+  }, [focusAtPosition]);
 
   const stats = useMemo(() => {
     const wordCount = calculateWordCount(content);
@@ -69,7 +79,7 @@ export function StatisticsSidebar() {
                 <CorrectionCard 
                   key={index} 
                   correction={correction} 
-                  onClick={() => focusAtPosition(correction.startOffset, correction.startOffset + correction.length)}
+                  onClick={() => handleCorrectionClick(correction)}
                 />
               ))}
             </div>

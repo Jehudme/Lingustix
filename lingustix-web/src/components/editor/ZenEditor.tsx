@@ -10,6 +10,7 @@ import type { Correction } from '@/types';
 // Constants for debounce timings
 const AUTO_SAVE_DELAY = 2000; // 2 seconds for auto-save
 const EVALUATION_DELAY = 1500; // 1.5 seconds for live evaluation
+const DEFAULT_LINE_HEIGHT = 28; // Default line height in pixels for scroll calculation
 
 interface ZenEditorProps {
   compositionId: string;
@@ -62,7 +63,7 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
       // Scroll the textarea to make the selection visible
       // Calculate the approximate line number and scroll to it
       const textBefore = content.slice(0, focusPosition.start);
-      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 28;
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || DEFAULT_LINE_HEIGHT;
       const lines = textBefore.split('\n').length - 1;
       const scrollTop = Math.max(0, lines * lineHeight - textarea.clientHeight / 2);
       textarea.scrollTop = scrollTop;
