@@ -37,10 +37,12 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     isLiveMode,
     hasUnsavedChanges,
     lastSaved,
+    focusPosition,
     setContent,
     saveContent,
     loadComposition,
     evaluateContent,
+    clearFocusPosition,
   } = useEditorStore();
 
   // Load composition on mount
@@ -49,6 +51,26 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
       showToast('error', 'Failed to load composition');
     });
   }, [compositionId, loadComposition, showToast]);
+
+  // Handle focusPosition changes - focus and scroll textarea to the issue position
+  useEffect(() => {
+    if (focusPosition && textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.focus();
+      textarea.setSelectionRange(focusPosition.start, focusPosition.end);
+      
+      // Scroll the textarea to make the selection visible
+      // Calculate the approximate line number and scroll to it
+      const textBefore = content.slice(0, focusPosition.start);
+      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 28;
+      const lines = textBefore.split('\n').length - 1;
+      const scrollTop = Math.max(0, lines * lineHeight - textarea.clientHeight / 2);
+      textarea.scrollTop = scrollTop;
+      
+      // Clear the focus position after handling
+      clearFocusPosition();
+    }
+  }, [focusPosition, content, clearFocusPosition]);
 
   // Use the smaller of autoSaveInterval or AUTO_SAVE_DELAY (2 seconds)
   const effectiveAutoSaveInterval = Math.min(autoSaveInterval, AUTO_SAVE_DELAY);
