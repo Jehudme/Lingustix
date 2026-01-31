@@ -89,16 +89,23 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     }
   }, [content, hasUnsavedChanges, debouncedSave]);
 
+  // Track previous content to detect actual changes
+  const prevContentRef = useRef<string>(content);
+
   // Auto-evaluate when content changes and live mode is active
+  // Also trigger when live mode is first enabled with existing content
   useEffect(() => {
-    if (isLiveMode && hasUnsavedChanges) {
+    const contentChanged = prevContentRef.current !== content;
+    prevContentRef.current = content;
+    
+    if (isLiveMode && content.trim().length > 0) {
       // Abort any pending evaluation when user starts typing
-      if (abortControllerRef.current) {
+      if (contentChanged && abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
       debouncedEvaluate();
     }
-  }, [content, isLiveMode, hasUnsavedChanges, debouncedEvaluate]);
+  }, [content, isLiveMode, debouncedEvaluate]);
 
   // Cleanup abort controller on unmount
   useEffect(() => {
