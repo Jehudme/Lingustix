@@ -3,15 +3,24 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronLeft, Download, Save, FileText, Type } from 'lucide-react';
+import { Check, ChevronLeft, Download, Save, FileText, Type, Zap } from 'lucide-react';
 import { useEditorStore } from '@/lib/stores';
 import { Breadcrumbs, type BreadcrumbItem } from '@/components/layout';
-import { Button, useToast } from '@/components/ui';
+import { Button, Switch, useToast } from '@/components/ui';
 
 export function EditorHeader() {
   const router = useRouter();
   const { showToast } = useToast();
-  const { composition, content, updateTitle, saveContent, isSaving, hasUnsavedChanges } = useEditorStore();
+  const { 
+    composition, 
+    content, 
+    updateTitle, 
+    saveContent, 
+    isSaving, 
+    hasUnsavedChanges,
+    isLiveMode,
+    setLiveMode,
+  } = useEditorStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +126,22 @@ export function EditorHeader() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
+        {/* Live Correction Toggle */}
+        <div className="flex items-center gap-2">
+          <Zap className={`w-4 h-4 ${isLiveMode ? 'text-indigo-400' : 'text-slate-500'}`} />
+          <span className={`text-sm ${isLiveMode ? 'text-slate-200' : 'text-slate-500'}`}>
+            Live Correction
+          </span>
+          <Switch
+            checked={isLiveMode}
+            onChange={setLiveMode}
+            label="Toggle Live Correction Mode"
+          />
+        </div>
+
+        <div className="w-px h-6 bg-slate-700" />
+
         {/* Save Button */}
         <Button
           variant="ghost"

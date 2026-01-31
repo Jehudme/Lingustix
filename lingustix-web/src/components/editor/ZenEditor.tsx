@@ -7,6 +7,10 @@ import { useDebounce } from '@/lib/hooks';
 import { useToast } from '@/components/ui';
 import type { Correction } from '@/types';
 
+// Constants for debounce timings
+const AUTO_SAVE_DELAY = 2000; // 2 seconds for auto-save
+const EVALUATION_DELAY = 1500; // 1.5 seconds for live evaluation
+
 interface ZenEditorProps {
   compositionId: string;
 }
@@ -21,6 +25,7 @@ interface HighlightRange {
 export function ZenEditor({ compositionId }: ZenEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const { showToast } = useToast();
   const { autoSaveInterval } = useSettingsStore();
   
@@ -28,11 +33,14 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     content,
     corrections,
     isSaving,
+    isEvaluating,
+    isLiveMode,
     hasUnsavedChanges,
     lastSaved,
     setContent,
     saveContent,
     loadComposition,
+    evaluateContent,
   } = useEditorStore();
 
   // Load composition on mount
@@ -42,14 +50,37 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     });
   }, [compositionId, loadComposition, showToast]);
 
-  // Debounced save function
+  // Use the smaller of autoSaveInterval or AUTO_SAVE_DELAY (2 seconds)
+  const effectiveAutoSaveInterval = Math.min(autoSaveInterval, AUTO_SAVE_DELAY);
+
+  // Debounced save function (independent of evaluation)
   const debouncedSave = useDebounce(() => {
     if (hasUnsavedChanges) {
       saveContent().catch(() => {
         showToast('error', 'Failed to save');
       });
     }
-  }, autoSaveInterval);
+  }, effectiveAutoSaveInterval);
+
+  // Debounced evaluation function (1.5 seconds after typing stops)
+  const debouncedEvaluate = useDebounce(() => {
+    if (isLiveMode && content.trim().length > 0) {
+      // Abort any pending evaluation request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      // Create new abort controller for this evaluation
+      abortControllerRef.current = new AbortController();
+      
+      evaluateContent(abortControllerRef.current.signal).catch((error) => {
+        // Only show error if it's not an abort error
+        if (error?.name !== 'CanceledError') {
+          showToast('error', 'Failed to analyze content');
+        }
+      });
+    }
+  }, EVALUATION_DELAY);
 
   // Auto-save when content changes
   useEffect(() => {
@@ -57,6 +88,33 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
       debouncedSave();
     }
   }, [content, hasUnsavedChanges, debouncedSave]);
+
+  // Track previous content to detect actual changes
+  const prevContentRef = useRef<string>(content);
+
+  // Auto-evaluate when content changes and live mode is active
+  // Also trigger when live mode is first enabled with existing content
+  useEffect(() => {
+    const contentChanged = prevContentRef.current !== content;
+    prevContentRef.current = content;
+    
+    if (isLiveMode && content.trim().length > 0) {
+      // Abort any pending evaluation when user starts typing
+      if (contentChanged && abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      debouncedEvaluate();
+    }
+  }, [content, isLiveMode, debouncedEvaluate]);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -198,6 +256,8 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
         readingTime={stats.readingTime}
         errorCount={corrections.length}
         isSaving={isSaving}
+        isEvaluating={isEvaluating}
+        isLiveMode={isLiveMode}
         lastSaved={lastSaved}
       />
     </div>
@@ -210,6 +270,8 @@ interface StatusBarProps {
   readingTime: number;
   errorCount: number;
   isSaving: boolean;
+  isEvaluating: boolean;
+  isLiveMode: boolean;
   lastSaved: Date | null;
 }
 
@@ -219,6 +281,8 @@ function StatusBar({
   readingTime,
   errorCount,
   isSaving,
+  isEvaluating,
+  isLiveMode,
   lastSaved,
 }: StatusBarProps) {
   const formatTime = (date: Date) => {
@@ -231,14 +295,27 @@ function StatusBar({
         <span>{wordCount} words</span>
         <span>{characterCount} characters</span>
         <span>{readingTime} min read</span>
-        {errorCount > 0 && (
+        {/* Only show error count when live mode is enabled */}
+        {isLiveMode && errorCount > 0 && (
           <span className="text-amber-500">
             {errorCount} issue{errorCount !== 1 ? 's' : ''}
           </span>
         )}
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
+        {/* Analyzing indicator */}
+        {isEvaluating && (
+          <motion.span
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="text-indigo-400"
+          >
+            Analyzing...
+          </motion.span>
+        )}
+        
+        {/* Saving/Saved status */}
         {isSaving ? (
           <motion.span
             animate={{ opacity: [0.5, 1, 0.5] }}
