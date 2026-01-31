@@ -1,13 +1,13 @@
 package com.nexus.lingustix.models.entities;
 
-import com.nexus.lingustix.Listeners.CompositionEntityListener;
+import com.nexus.lingustix.Listeners.CompositionListener;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@EntityListeners(CompositionEntityListener.class)
+@EntityListeners(CompositionListener.class)
 @Getter
 @Setter
 @NoArgsConstructor

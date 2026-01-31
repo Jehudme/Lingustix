@@ -19,13 +19,13 @@ import org.springframework.stereotype.Component;
  * application startup before Spring injects the dependency.
  */
 @Component
-public class CompositionEntityListener {
+public class CompositionListener {
 
     private static CompositionSearchRepository compositionSearchRepository;
 
     @Autowired
     public void setCompositionSearchRepository(CompositionSearchRepository repository) {
-        CompositionEntityListener.compositionSearchRepository = repository;
+        CompositionListener.compositionSearchRepository = repository;
     }
 
     @PostPersist
