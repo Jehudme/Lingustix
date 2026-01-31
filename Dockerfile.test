@@ -1,0 +1,14 @@
+FROM maven:3.9.6-eclipse-temurin-21
+WORKDIR /app
+
+# Cache dependencies
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copy source code
+COPY src ./src
+# We do not copy .env here; we let Compose inject it via env_file
+
+# Run tests
+# We use -Dspring.profiles.active=test to ensure it uses test-specific settings if you have them
+ENTRYPOINT ["mvn", "test"]

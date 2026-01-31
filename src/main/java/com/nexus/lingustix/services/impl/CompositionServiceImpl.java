@@ -66,9 +66,10 @@ public class CompositionServiceImpl implements CompositionService {
     @Override
     @Transactional
     public void delete(UUID id) {
-        Composition composition = getById(id)
+        Composition composition = compositionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
-        compositionRepository.deleteById(id);
+
+        compositionRepository.delete(composition);
     }
 
     @Override

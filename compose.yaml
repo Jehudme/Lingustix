@@ -1,35 +1,99 @@
 services:
-  # PostgreSQL Database Service
-  postgres:
-    image: 'postgres:16-alpine'
-    container_name: lingustix-db
-    environment:
-      - 'POSTGRES_DB=lingustix_db'
-      - 'POSTGRES_USER=postgres'
-      - 'POSTGRES_PASSWORD=password'
+  # Spring Boot App Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lingustix-app
+    profiles: ["app"]
+    env_file:
+      - .env
     ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${SPRING_DATASOURCE_DB:-lingustix_db}
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - LANGUAGETOOL_URL=http://languagetool:8010/v2
+      - SPRING_DOCKER_COMPOSE_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      languagetool:
+        condition: service_healthy
 
-  # LanguageTool Server Service
+  # Dedicated Testing Service
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: lingustix-test-runner
+    profiles: ["test"]
+    env_file:
+      - .env
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${SPRING_DATASOURCE_DB:-lingustix_db}
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - LANGUAGETOOL_URL=http://languagetool:8010/v2
+      - SPRING_DOCKER_COMPOSE_ENABLED=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      languagetool:
+        condition: service_healthy
+
+  # LanguageTool Service
   languagetool:
     image: 'erikvl87/languagetool'
     container_name: lingustix-languagetool
+    profiles: ["languagetool"]
     ports:
-      - '8081:8010'
+      - '${LANGUAGETOOL_PORT:-8081}:8010'
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/v2/languages"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  # Elasticsearch Service
+  # PostgreSQL
+  postgres:
+    image: 'postgres:16-alpine'
+    container_name: lingustix-db
+    profiles: ["postgres"]
+    environment:
+      - POSTGRES_DB=${SPRING_DATASOURCE_DB:-lingustix_db}
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD:-password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME:-postgres} -d ${SPRING_DATASOURCE_DB:-lingustix_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Elasticsearch
   elasticsearch:
-    image: 'docker.elastic.co/elasticsearch/elasticsearch:9.2.4' # Updated to match Spring Boot 4.0.2 elasticsearch-java 9.2.3
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:9.2.4'
     container_name: lingustix-search
+    profiles: ["search"]
     environment:
       - 'discovery.type=single-node'
       - 'xpack.security.enabled=false'
       - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
-      - '9200:9200'
+      - '${ELASTICSEARCH_PORT:-9200}:9200'
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
