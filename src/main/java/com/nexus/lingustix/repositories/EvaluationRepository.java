@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface EvaluationRepository extends JpaRepository<Evaluation, UUID> {
     Optional<Evaluation> findByCompositionId(UUID compositionId);
+    boolean existsByIdAndCompositionOwnerId(UUID id, UUID compositionOwnerId);
 }

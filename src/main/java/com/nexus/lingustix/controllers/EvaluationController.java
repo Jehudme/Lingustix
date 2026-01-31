@@ -1,7 +1,10 @@
 package com.nexus.lingustix.controllers;
 
+import com.nexus.lingustix.components.GlobalExceptionComponent;
 import com.nexus.lingustix.models.entities.Evaluation;
 import com.nexus.lingustix.models.requests.EvaluationCreateRequest;
+import com.nexus.lingustix.services.AccountService;
+import com.nexus.lingustix.services.CompositionService;
 import com.nexus.lingustix.services.EvaluationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,21 +20,32 @@ import java.util.UUID;
 public class EvaluationController {
 
     private final EvaluationService evaluationService;
+    private final CompositionService compositionService;
+    private final AccountService accountService;
 
     @PostMapping
     public ResponseEntity<Evaluation> create(@Valid @RequestBody EvaluationCreateRequest request) {
+        if (!compositionService.verifyOwnership(request.compositionId(), accountService.getAuthenticatedAccountId()))
+            throw new GlobalExceptionComponent.UnauthorizedException("You do not have permission to evaluate this composition.");
+
         Evaluation created = evaluationService.create(request.compositionId());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        if (!evaluationService.verifyOwnership(id, accountService.getAuthenticatedAccountId()))
+            throw new GlobalExceptionComponent.UnauthorizedException("You do not have permission to delete this evaluation.");
+
         evaluationService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Evaluation> getById(@PathVariable UUID id) {
+        if (!evaluationService.verifyOwnership(id, accountService.getAuthenticatedAccountId()))
+            throw new GlobalExceptionComponent.UnauthorizedException("You do not have permission to access this evaluation.");
+
         return evaluationService.getById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -39,6 +53,9 @@ public class EvaluationController {
 
     @GetMapping("/composition/{compositionId}")
     public ResponseEntity<Evaluation> getByComposition(@PathVariable UUID compositionId) {
+        if (!compositionService.verifyOwnership(compositionId, accountService.getAuthenticatedAccountId()))
+            throw new GlobalExceptionComponent.UnauthorizedException("You do not have permission to access this composition.");
+
         return evaluationService.getByCompositionId(compositionId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

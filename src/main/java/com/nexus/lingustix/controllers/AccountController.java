@@ -7,6 +7,7 @@ import com.nexus.lingustix.services.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
@@ -25,30 +26,36 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.CREATED).body(AccountResponse.from(created));
     }
 
-    @PatchMapping("/{id}/email")
-    public ResponseEntity<AccountResponse> updateEmail(@PathVariable UUID id, @Valid @RequestBody AccountUpdateEmailRequest request) {
-        return ResponseEntity.ok(AccountResponse.from(accountService.updateEmail(id, request.email())));
+    @PatchMapping("/email")
+    public ResponseEntity<AccountResponse> updateEmail(@Valid @RequestBody AccountUpdateEmailRequest request) {
+        return ResponseEntity.ok(AccountResponse.from(
+                accountService.updateEmail(accountService.getAuthenticatedAccountId(), request.email())
+        ));
     }
 
-    @PatchMapping("/{id}/password")
-    public ResponseEntity<AccountResponse> updatePassword(@PathVariable UUID id, @Valid @RequestBody AccountUpdatePasswordRequest request) {
-        return ResponseEntity.ok(AccountResponse.from(accountService.updatePassword(id, request.password())));
+    @PatchMapping("/password")
+    public ResponseEntity<AccountResponse> updatePassword(@Valid @RequestBody AccountUpdatePasswordRequest request) {
+        return ResponseEntity.ok(AccountResponse.from(
+                accountService.updatePassword(accountService.getAuthenticatedAccountId(), request.password())
+        ));
     }
 
-    @PatchMapping("/{id}/username")
-    public ResponseEntity<AccountResponse> updateUsername(@PathVariable UUID id, @Valid @RequestBody AccountUpdateUsernameRequest request) {
-        return ResponseEntity.ok(AccountResponse.from(accountService.updateUsername(id, request.username())));
+    @PatchMapping("/username")
+    public ResponseEntity<AccountResponse> updateUsername(@Valid @RequestBody AccountUpdateUsernameRequest request) {
+        return ResponseEntity.ok(AccountResponse.from(
+                accountService.updateUsername(accountService.getAuthenticatedAccountId(), request.username())
+        ));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        accountService.delete(id);
+    @DeleteMapping
+    public ResponseEntity<Void> delete() {
+        accountService.delete(accountService.getAuthenticatedAccountId());
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<AccountResponse> getById(@PathVariable UUID id) {
-        return accountService.getById(id)
+    @GetMapping("/me")
+    public ResponseEntity<AccountResponse> getById() {
+        return accountService.getById(accountService.getAuthenticatedAccountId())
                 .map(AccountResponse::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

@@ -29,9 +29,6 @@ public class EvaluationServiceImpl implements EvaluationService {
         Composition composition = compositionRepository.findById(compositionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
 
-        // Verify ownership
-        verifyCompositionOwnership(composition);
-
         Evaluation evaluation = Evaluation.builder()
                 .composition(composition)
                 .build();
@@ -45,45 +42,22 @@ public class EvaluationServiceImpl implements EvaluationService {
         Evaluation evaluation = evaluationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Evaluation not found"));
         
-        // Verify ownership through composition
-        verifyOwnership(evaluation);
-        
         evaluationRepository.deleteById(id);
     }
 
     @Override
+    public boolean verifyOwnership(UUID evaluationId, UUID ownerId) {
+        return evaluationRepository.existsByIdAndCompositionOwnerId(evaluationId, ownerId);
+    }
+
+    @Override
     public Optional<Evaluation> getById(UUID id) {
-        Optional<Evaluation> evaluation = evaluationRepository.findById(id);
-        if (evaluation.isPresent()) {
-            verifyOwnership(evaluation.get());
-        }
-        return evaluation;
+        return evaluationRepository.findById(id);
     }
 
     @Override
     public Optional<Evaluation> getByCompositionId(UUID compositionId) {
-        Optional<Evaluation> evaluation = evaluationRepository.findByCompositionId(compositionId);
-        if (evaluation.isPresent()) {
-            verifyOwnership(evaluation.get());
-        }
-        return evaluation;
+        return evaluationRepository.findByCompositionId(compositionId);
     }
 
-    private void verifyOwnership(Evaluation evaluation) {
-        Composition composition = evaluation.getComposition();
-        verifyCompositionOwnership(composition);
-    }
-
-    private void verifyCompositionOwnership(Composition composition) {
-        String currentUserId = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (composition == null || composition.getOwner() == null ||
-                !composition.getOwner().getId().toString().equals(currentUserId)) {
-            throw new UnauthorizedException("Not authorized to access this evaluation");
-        }
-    }
-
-    @Override
-    public List<Evaluation> getAll() {
-        return evaluationRepository.findAll();
-    }
 }

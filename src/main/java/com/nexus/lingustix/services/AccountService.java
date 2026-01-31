@@ -8,12 +8,14 @@ import java.util.UUID;
 
 public interface AccountService {
     Account create(String username, String email, String password);
-    Account updateEmail(UUID id, String newEmail);
-    Account updatePassword(UUID id, String newPassword);
-    Account updateUsername(UUID id, String newUsername);
-    void delete(UUID id);
+    Account updateEmail(UUID accountId, String newEmail);
+    Account updatePassword(UUID accountId, String newPassword);
+    Account updateUsername(UUID accountId, String newUsername);
+    void delete(UUID accountId);
 
-    Optional<Account> getById(UUID id);
+    UUID getAuthenticatedAccountId();
+
+    Optional<Account> getById(UUID accountId);
     Optional<Account> getByIdentifier(String identifier);
     List<Account> getAll();
 }

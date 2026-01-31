@@ -1,5 +1,6 @@
 package com.nexus.lingustix.repositories;
 
+import com.nexus.lingustix.models.entities.Account;
 import com.nexus.lingustix.models.entities.Composition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,5 +13,8 @@ import java.util.Optional;
 @Repository
 public interface CompositionRepository extends JpaRepository<Composition, UUID> {
     Optional<Composition> findByTitleIgnoreCase(String title);
+    boolean existsByIdAndOwnerId(UUID id, UUID ownerId);
     Page<Composition> findByOwnerId(UUID ownerId, Pageable pageable);
+
+    UUID owner(Account owner);
 }

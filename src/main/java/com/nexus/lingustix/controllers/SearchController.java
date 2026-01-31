@@ -1,6 +1,7 @@
 package com.nexus.lingustix.controllers;
 
 import com.nexus.lingustix.models.searches.CompositionIndex;
+import com.nexus.lingustix.services.AccountService;
 import com.nexus.lingustix.services.SearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,25 +19,12 @@ import java.util.UUID;
 public class SearchController {
 
     private final SearchService searchService;
+    private  final AccountService accountService;
 
     @GetMapping("/compositions")
     public ResponseEntity<Page<CompositionIndex>> searchCompositions(@RequestParam String query,
-                                                                     @RequestParam(required = false) UUID ownerId,
                                                                      @PageableDefault(size = 20) Pageable pageable) {
+        UUID ownerId = accountService.getAuthenticatedAccountId();
         return ResponseEntity.ok(searchService.searchCompositions(query, ownerId, pageable));
-    }
-
-    @PostMapping("/compositions/{id}/reindex")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> reindexComposition(@PathVariable UUID id) {
-        searchService.reindexComposition(id);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/compositions/rebuild")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> rebuildIndex() {
-        searchService.rebuildIndex();
-        return ResponseEntity.ok().build();
     }
 }

@@ -6,6 +6,7 @@ import com.nexus.lingustix.models.entities.Account;
 import com.nexus.lingustix.models.entities.Composition;
 import com.nexus.lingustix.repositories.AccountRepository;
 import com.nexus.lingustix.repositories.CompositionRepository;
+import com.nexus.lingustix.services.AccountService;
 import com.nexus.lingustix.services.CompositionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,14 +24,17 @@ import java.util.UUID;
 public class CompositionServiceImpl implements CompositionService {
 
     private final CompositionRepository compositionRepository;
-    private final AccountRepository accountRepository;
+    private final AccountService accountService;
+
+    private String getCurrentUserId() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
 
     @Override
     @Transactional
-    public Composition create(String title) {
-        String currentUserId = getCurrentUserId();
-        Account owner = accountRepository.findById(UUID.fromString(currentUserId))
-                .orElseThrow(() -> new UnauthorizedException("User not found"));
+    public Composition create(UUID ownerId, String title) {
+        Account owner = accountService.getById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
         
         Composition composition = Composition.builder()
                 .title(title)
@@ -42,10 +46,9 @@ public class CompositionServiceImpl implements CompositionService {
 
     @Override
     @Transactional
-    public Composition updateTitle(UUID id, String title) {
-        Composition composition = getById(id)
+    public Composition updateTitle(UUID compositionId, String title) {
+        Composition composition = getById(compositionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
-        verifyOwnership(composition);
         composition.setTitle(title);
         return compositionRepository.save(composition);
     }
@@ -55,7 +58,7 @@ public class CompositionServiceImpl implements CompositionService {
     public Composition updateContent(UUID id, String content) {
         Composition composition = getById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
-        verifyOwnership(composition);
+
         composition.setContent(content);
         return compositionRepository.save(composition);
     }
@@ -65,23 +68,12 @@ public class CompositionServiceImpl implements CompositionService {
     public void delete(UUID id) {
         Composition composition = getById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found", "composition"));
-        verifyOwnership(composition);
         compositionRepository.deleteById(id);
     }
 
-    private void verifyOwnership(Composition composition) {
-        String currentUserId = getCurrentUserId();
-        if (composition.getOwner() == null || !composition.getOwner().getId().toString().equals(currentUserId)) {
-            throw new UnauthorizedException("Not authorized to access this composition");
-        }
-    }
-
-    private String getCurrentUserId() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new UnauthorizedException("User not authenticated");
-        }
-        return (String) authentication.getPrincipal();
+    @Override
+    public boolean verifyOwnership(UUID compositionId, UUID ownerId) {
+        return compositionRepository.existsByIdAndOwnerId(compositionId, ownerId);
     }
 
     @Override
@@ -90,22 +82,8 @@ public class CompositionServiceImpl implements CompositionService {
     }
 
     @Override
-    public Optional<Composition> getByIdForCurrentUser(UUID id) {
-        Optional<Composition> composition = compositionRepository.findById(id);
-        if (composition.isPresent()) {
-            verifyOwnership(composition.get());
-        }
-        return composition;
-    }
-
-    @Override
-    public Optional<Composition> getByTitle(String title) {
-        return compositionRepository.findByTitleIgnoreCase(title);
-    }
-
-    @Override
     public List<Composition> getByOwner(UUID ownerId) {
-        Account owner = accountRepository.findById(ownerId)
+        Account owner = accountService.getById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Owner not found", "account"));
 
         return owner.getCompositions();
@@ -114,10 +92,5 @@ public class CompositionServiceImpl implements CompositionService {
     @Override
     public Page<Composition> getByOwner(UUID ownerId, Pageable pageable) {
         return compositionRepository.findByOwnerId(ownerId, pageable);
-    }
-
-    @Override
-    public List<Composition> getAll() {
-        return compositionRepository.findAll();
     }
 }
