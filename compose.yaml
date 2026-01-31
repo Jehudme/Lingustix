@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - SERVER_PORT=${SERVER_PORT:-8080}
     container_name: lingustix-app
     profiles: ["app"]
     env_file:
