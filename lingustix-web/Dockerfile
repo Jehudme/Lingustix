@@ -8,22 +8,28 @@ RUN npm install
 
 # Copy source and build the application
 COPY . .
-# Note: For Next.js, ensure 'output: "export"' is set in next.config.js
 RUN npm run build
 
 # Runtime Stage
-FROM nginx:alpine
-WORKDIR /usr/share/nginx/html
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-# Remove default nginx static assets
-RUN rm -rf ./*
+ENV NODE_ENV=production
 
-# Copy the built files from the build stage
-# Use "out" for Next.js static export or "dist" for standard React/Vite
-COPY --from=build /app/out .
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Expose the default Nginx port
-EXPOSE 80
+# Copy necessary files from build stage
+COPY --from=build /app/public ./public
+COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Run Nginx in the foreground
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]
