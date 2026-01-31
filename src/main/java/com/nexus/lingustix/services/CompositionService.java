@@ -16,8 +16,9 @@ public interface CompositionService {
 
     boolean verifyOwnership(UUID compositionId, UUID ownerId);
 
+    Page<UUID> getIdsByOwner(UUID ownerId, Pageable pageable);
     Optional<Composition> getById(UUID id);
-    List<Composition> getByOwner(UUID ownerId);
-    Page<Composition> getByOwner(UUID ownerId, Pageable pageable);
+    List<UUID> getByOwner(UUID ownerId);
+    Page<UUID> getByOwner(UUID ownerId, Pageable pageable);
 
 }

@@ -55,4 +55,11 @@ public class JwtAuthComponent extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
+    public java.util.Optional<String> extractTokenFromHeader(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return java.util.Optional.empty();
+        }
+        return java.util.Optional.of(authHeader.substring(7));
+    }
 }

@@ -1,4 +1,4 @@
-package com.nexus.lingustix.components;
+package com.nexus.lingustix.Listeners;
 
 import com.nexus.lingustix.models.entities.Composition;
 import com.nexus.lingustix.models.searches.CompositionIndex;

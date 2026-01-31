@@ -114,9 +114,4 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.findByEmail(identifier)
                 .or(() -> accountRepository.findByUsername(identifier));
     }
-
-    @Override
-    public List<Account> getAll() {
-        return accountRepository.findAll();
-    }
 }

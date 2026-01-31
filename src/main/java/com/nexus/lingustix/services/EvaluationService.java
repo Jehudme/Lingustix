@@ -1,10 +1,10 @@
 package com.nexus.lingustix.services;
 
-import com.nexus.lingustix.models.responses.CorrectionsResponse;
+import com.nexus.lingustix.models.responses.Correction;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 public interface EvaluationService {
-    CorrectionsResponse create(UUID compositionId);
+    List<Correction> create(UUID compositionId);
 }

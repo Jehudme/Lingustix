@@ -16,6 +16,4 @@ public interface AccountService {
     UUID getAuthenticatedAccountId();
 
     Optional<Account> getById(UUID accountId);
-    Optional<Account> getByIdentifier(String identifier);
-    List<Account> getAll();
-}
+    Optional<Account> getByIdentifier(String identifier);}

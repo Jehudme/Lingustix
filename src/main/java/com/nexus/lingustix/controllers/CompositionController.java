@@ -70,9 +70,9 @@ public class CompositionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping
-    public ResponseEntity<Page<CompositionResponse>> getAll(@PageableDefault(size = 20) Pageable pageable) {
+    @GetMapping("/ids")
+    public ResponseEntity<Page<UUID>> getAllIds(@PageableDefault(size = 20) Pageable pageable) {
         UUID ownerId = accountService.getAuthenticatedAccountId();
-        return ResponseEntity.ok(compositionService.getByOwner(ownerId, pageable).map(CompositionResponse::from));
+        return ResponseEntity.ok(compositionService.getIdsByOwner(ownerId, pageable));
     }
 }

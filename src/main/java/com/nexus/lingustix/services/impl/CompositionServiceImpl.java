@@ -78,20 +78,22 @@ public class CompositionServiceImpl implements CompositionService {
     }
 
     @Override
+    public Page<UUID> getIdsByOwner(UUID ownerId, Pageable pageable) {
+        return compositionRepository.findIdsByOwnerId(ownerId, pageable);
+    }
+
+    @Override
     public Optional<Composition> getById(UUID id) {
         return compositionRepository.findById(id);
     }
 
     @Override
-    public List<Composition> getByOwner(UUID ownerId) {
-        Account owner = accountService.getById(ownerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found", "account"));
-
-        return owner.getCompositions();
+    public List<UUID> getByOwner(UUID ownerId) {
+        return compositionRepository.findIdsByOwnerId(ownerId);
     }
 
     @Override
-    public Page<Composition> getByOwner(UUID ownerId, Pageable pageable) {
-        return compositionRepository.findByOwnerId(ownerId, pageable);
+    public Page<UUID> getByOwner(UUID ownerId, Pageable pageable) {
+        return compositionRepository.findIdsByOwnerId(ownerId, pageable);
     }
 }

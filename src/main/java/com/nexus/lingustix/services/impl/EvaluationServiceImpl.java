@@ -3,7 +3,6 @@ package com.nexus.lingustix.services.impl;
 import com.nexus.lingustix.components.GlobalExceptionComponent.ResourceNotFoundException;
 import com.nexus.lingustix.models.entities.Composition;
 import com.nexus.lingustix.models.responses.Correction;
-import com.nexus.lingustix.models.responses.CorrectionsResponse;
 import com.nexus.lingustix.repositories.CompositionRepository;
 import com.nexus.lingustix.services.EvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -29,12 +28,10 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     @Override
     @Transactional
-    public CorrectionsResponse create(UUID compositionId) {
+    public List<Correction> create(UUID compositionId) {
         Composition composition = compositionRepository.findById(compositionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
 
-        // 1. Request grammar check with language=auto for auto-detection
-        // Setting language to 'auto' triggers LanguageTool's internal language identifier
         LanguageToolResponse response = restClient.post()
                 .uri(languageToolUrl + "/check")
                 .body("text=" + composition.getContent() + "&language=auto")
@@ -53,7 +50,7 @@ public class EvaluationServiceImpl implements EvaluationService {
                             .build())
                     .collect(Collectors.toList());
 
-            return new CorrectionsResponse(corrections);
+            return corrections;
         }
 
         throw new RuntimeException("LanguageTool returned no matches");

@@ -1,7 +1,6 @@
 package com.nexus.lingustix.models.entities;
 
-import com.nexus.lingustix.components.CompositionEntityListener;
-import com.nexus.lingustix.models.responses.CorrectionsResponse;
+import com.nexus.lingustix.Listeners.CompositionEntityListener;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
