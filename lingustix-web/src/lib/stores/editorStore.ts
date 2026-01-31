@@ -12,6 +12,7 @@ interface EditorState {
   lastSaved: Date | null;
   hasUnsavedChanges: boolean;
   error: string | null;
+  focusPosition: { start: number; end: number } | null;
 }
 
 interface EditorActions {
@@ -24,6 +25,8 @@ interface EditorActions {
   clearCorrections: () => void;
   reset: () => void;
   setError: (error: string | null) => void;
+  focusAtPosition: (start: number, end: number) => void;
+  clearFocusPosition: () => void;
 }
 
 type EditorStore = EditorState & EditorActions;
@@ -38,6 +41,7 @@ const initialState: EditorState = {
   lastSaved: null,
   hasUnsavedChanges: false,
   error: null,
+  focusPosition: null,
 };
 
 export const useEditorStore = create<EditorStore>((set, get) => ({
@@ -99,8 +103,27 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   },
 
   evaluateContent: async (signal?: AbortSignal) => {
-    const { composition, isEvaluating } = get();
-    if (!composition || isEvaluating) return;
+    const { composition, isEvaluating, hasUnsavedChanges, content, isSaving } = get();
+    // Prevent concurrent evaluation or save operations
+    if (!composition || isEvaluating || isSaving) return;
+
+    // Save first if there are unsaved changes
+    if (hasUnsavedChanges) {
+      set({ isSaving: true, error: null });
+      try {
+        const updated = await compositionApi.updateContent(composition.id, { content });
+        set({
+          composition: updated,
+          isSaving: false,
+          lastSaved: new Date(),
+          hasUnsavedChanges: false,
+        });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to save';
+        set({ error: errorMessage, isSaving: false });
+        throw error;
+      }
+    }
 
     set({ isEvaluating: true, error: null });
     try {
@@ -131,6 +154,14 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
   reset: () => set(initialState),
 
   setError: (error: string | null) => set({ error }),
+
+  focusAtPosition: (start: number, end: number) => {
+    set({ focusPosition: { start, end } });
+  },
+
+  clearFocusPosition: () => {
+    set({ focusPosition: null });
+  },
 }));
 
 // Utility functions for editor statistics

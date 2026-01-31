@@ -1,13 +1,23 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useEditorStore, calculateWordCount, calculateCharacterCount, calculateReadingTime, calculateErrorDensity } from '@/lib/stores';
-import { AlertCircle, FileText, Clock, Hash, Loader2 } from 'lucide-react';
+import { AlertCircle, FileText, Clock, Hash } from 'lucide-react';
 import type { Correction } from '@/types';
 
+// Helper function to calculate the end offset of a correction
+const getCorrectionEndOffset = (correction: Correction): number => {
+  return correction.startOffset + correction.length;
+};
+
 export function StatisticsSidebar() {
-  const { content, corrections, isEvaluating, evaluateContent } = useEditorStore();
+  const { content, corrections, isLiveMode, focusAtPosition } = useEditorStore();
+
+  // Handle clicking on a correction card to focus the editor at the issue position
+  const handleCorrectionClick = useCallback((correction: Correction) => {
+    focusAtPosition(correction.startOffset, getCorrectionEndOffset(correction));
+  }, [focusAtPosition]);
 
   const stats = useMemo(() => {
     const wordCount = calculateWordCount(content);
@@ -50,27 +60,6 @@ export function StatisticsSidebar() {
         />
       </div>
 
-      {/* Evaluate Button */}
-      <div className="px-4 pb-4">
-        <button
-          onClick={() => evaluateContent()}
-          disabled={isEvaluating || !content.trim()}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium transition-colors"
-        >
-          {isEvaluating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <AlertCircle className="w-4 h-4" />
-              Analyze Text
-            </>
-          )}
-        </button>
-      </div>
-
       {/* Corrections List */}
       <div className="flex-1 overflow-y-auto border-t border-slate-800">
         <div className="px-4 py-3">
@@ -80,12 +69,18 @@ export function StatisticsSidebar() {
           
           {corrections.length === 0 ? (
             <p className="text-sm text-slate-500">
-              {content.trim() ? 'Click "Analyze Text" to find issues' : 'Start writing to analyze'}
+              {content.trim() 
+                ? (isLiveMode ? 'No issues found' : 'Enable live mode to analyze') 
+                : 'Start writing to analyze'}
             </p>
           ) : (
             <div className="space-y-2">
               {corrections.map((correction, index) => (
-                <CorrectionCard key={index} correction={correction} />
+                <CorrectionCard 
+                  key={index} 
+                  correction={correction} 
+                  onClick={() => handleCorrectionClick(correction)}
+                />
               ))}
             </div>
           )}
@@ -118,14 +113,16 @@ function StatCard({ icon, label, value, highlight = false }: StatCardProps) {
 
 interface CorrectionCardProps {
   correction: Correction;
+  onClick: () => void;
 }
 
-function CorrectionCard({ correction }: CorrectionCardProps) {
+function CorrectionCard({ correction, onClick }: CorrectionCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5"
+      onClick={onClick}
+      className="p-3 rounded-lg border border-amber-500/20 bg-amber-500/5 cursor-pointer hover:bg-amber-500/10 transition-colors"
     >
       <div className="flex items-start gap-2 mb-2">
         <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
