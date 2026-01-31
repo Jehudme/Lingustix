@@ -19,7 +19,7 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Expose the port defined in your properties
-EXPOSE ${SERVER_PORT}
+EXPOSE 8080
 
 # Run the application
 # We use the shell form to ensure environment variables from .env are expanded
