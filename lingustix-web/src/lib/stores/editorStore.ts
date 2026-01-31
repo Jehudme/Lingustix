@@ -64,8 +64,51 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     }
   },
 
-  setContent: (content: string) => {
-    set({ content, hasUnsavedChanges: true });
+  setContent: (newContent: string) => {
+    const { content: oldContent, corrections } = get();
+    
+    // Find the change position and delta by comparing old and new content
+    const minLen = Math.min(oldContent.length, newContent.length);
+    let changeStart = 0;
+    
+    // Find where the content starts to differ from the beginning
+    while (changeStart < minLen && oldContent[changeStart] === newContent[changeStart]) {
+      changeStart++;
+    }
+    
+    // Find where it differs from the end (to handle mid-text changes)
+    let oldEnd = oldContent.length;
+    let newEnd = newContent.length;
+    while (oldEnd > changeStart && newEnd > changeStart && oldContent[oldEnd - 1] === newContent[newEnd - 1]) {
+      oldEnd--;
+      newEnd--;
+    }
+    
+    // Calculate the delta (positive = insertion, negative = deletion)
+    const delta = newContent.length - oldContent.length;
+    
+    // Update corrections: remove those that overlap with the change, adjust offsets for the rest
+    const updatedCorrections = corrections
+      .filter((correction) => {
+        const correctionEnd = correction.startOffset + correction.length;
+        // Remove correction if the change overlaps with it
+        // Change region in old content: [changeStart, oldEnd)
+        const changeOverlapsCorrection = 
+          changeStart < correctionEnd && oldEnd > correction.startOffset;
+        return !changeOverlapsCorrection;
+      })
+      .map((correction) => {
+        // Adjust offset for corrections that come after the change
+        if (correction.startOffset >= oldEnd) {
+          return {
+            ...correction,
+            startOffset: correction.startOffset + delta,
+          };
+        }
+        return correction;
+      });
+    
+    set({ content: newContent, corrections: updatedCorrections, hasUnsavedChanges: true });
   },
 
   saveContent: async () => {
