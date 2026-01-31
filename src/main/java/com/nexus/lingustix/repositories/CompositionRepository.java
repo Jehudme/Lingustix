@@ -15,6 +15,4 @@ public interface CompositionRepository extends JpaRepository<Composition, UUID> 
     Optional<Composition> findByTitleIgnoreCase(String title);
     boolean existsByIdAndOwnerId(UUID id, UUID ownerId);
     Page<Composition> findByOwnerId(UUID ownerId, Pageable pageable);
-
-    UUID owner(Account owner);
 }
