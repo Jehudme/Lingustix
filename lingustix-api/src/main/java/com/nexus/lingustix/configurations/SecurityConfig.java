@@ -2,6 +2,7 @@ package com.nexus.lingustix.configurations;
 
 import com.nexus.lingustix.components.JwtAuthComponent;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,6 +21,9 @@ import org.springframework.web.cors.CorsConfiguration; // Import
 import org.springframework.web.cors.CorsConfigurationSource; // Import
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource; // Import
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List; // Import
 
 @Configuration
@@ -63,11 +67,16 @@ public class SecurityConfig {
 
     // 2. Define the CORS configuration source
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() throws UnknownHostException {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Match your WebMvcConfig settings
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        // 1. Always allow localhost for development
+        List<String> allowedOrigins = new ArrayList<>();
+        configuration.setAllowedOrigins(List.of("*"));
+
+        // 3. Set the allowed origins
+        configuration.setAllowedOrigins(allowedOrigins);
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

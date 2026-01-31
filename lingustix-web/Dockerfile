@@ -2,6 +2,12 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# 1. Capture the argument from compose
+ARG NEXT_PUBLIC_API_URL
+
+# 2. Set it as an environment variable for the build command
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Copy package files and install dependencies to leverage Docker layer caching
 COPY package*.json ./
 RUN npm install

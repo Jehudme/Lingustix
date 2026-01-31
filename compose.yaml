@@ -31,6 +31,8 @@ services:
     build:
       context: ./lingustix-web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: lingustix-web
     profiles: [ "web" ]
     ports:
