@@ -12,6 +12,7 @@ services:
       - .env
     ports:
       - "${SERVER_PORT:-8080}:8080"
+      - "5005:5005" # Map the debug port
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${SPRING_DATASOURCE_DB:-lingustix_db}
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
@@ -90,10 +91,11 @@ services:
       - 'xpack.security.enabled=false'
       - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 45s
     ports:
       - '${ELASTICSEARCH_PORT:-9200}:9200'
     volumes:

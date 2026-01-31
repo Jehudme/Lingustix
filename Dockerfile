@@ -23,4 +23,4 @@ EXPOSE ${SERVER_PORT}
 
 # Run the application
 # We use the shell form to ensure environment variables from .env are expanded
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005", "-jar", "app.jar"]

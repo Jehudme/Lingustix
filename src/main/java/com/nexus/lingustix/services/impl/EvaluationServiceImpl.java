@@ -2,10 +2,9 @@ package com.nexus.lingustix.services.impl;
 
 import com.nexus.lingustix.components.GlobalExceptionComponent.ResourceNotFoundException;
 import com.nexus.lingustix.models.entities.Composition;
-import com.nexus.lingustix.models.entities.Correction;
-import com.nexus.lingustix.models.entities.Evaluation;
+import com.nexus.lingustix.models.responses.Correction;
+import com.nexus.lingustix.models.responses.CorrectionsResponse;
 import com.nexus.lingustix.repositories.CompositionRepository;
-import com.nexus.lingustix.repositories.EvaluationRepository;
 import com.nexus.lingustix.services.EvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +14,6 @@ import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EvaluationServiceImpl implements EvaluationService {
 
-    private final EvaluationRepository evaluationRepository;
     private final CompositionRepository compositionRepository;
     private final RestClient restClient = RestClient.create();
 
@@ -32,13 +29,9 @@ public class EvaluationServiceImpl implements EvaluationService {
 
     @Override
     @Transactional
-    public Evaluation create(UUID compositionId) {
+    public CorrectionsResponse create(UUID compositionId) {
         Composition composition = compositionRepository.findById(compositionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Composition not found"));
-
-        Evaluation evaluation = Evaluation.builder()
-                .composition(composition)
-                .build();
 
         // 1. Request grammar check with language=auto for auto-detection
         // Setting language to 'auto' triggers LanguageTool's internal language identifier
@@ -53,42 +46,17 @@ public class EvaluationServiceImpl implements EvaluationService {
             List<Correction> corrections = response.matches().stream()
                     .map(match -> Correction.builder()
                             .original(composition.getContent().substring(match.offset(), match.offset() + match.length()))
-                            .suggested(match.replacements().isEmpty() ? "" : match.replacements().get(0).get("value"))
+                            .suggested(match.replacements().isEmpty() ? "" : match.replacements().getFirst().get("value"))
                             .startOffset(match.offset())
                             .length(match.length())
                             .explanation(match.message())
-                            .evaluation(evaluation)
                             .build())
                     .collect(Collectors.toList());
 
-            evaluation.setCorrections(corrections);
+            return new CorrectionsResponse(corrections);
         }
 
-        return evaluationRepository.save(evaluation);
-    }
-
-    @Override
-    @Transactional
-    public void delete(UUID id) {
-        if (!evaluationRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Evaluation not found");
-        }
-        evaluationRepository.deleteById(id);
-    }
-
-    @Override
-    public boolean verifyOwnership(UUID evaluationId, UUID ownerId) {
-        return evaluationRepository.existsByIdAndCompositionOwnerId(evaluationId, ownerId);
-    }
-
-    @Override
-    public Optional<Evaluation> getById(UUID id) {
-        return evaluationRepository.findById(id);
-    }
-
-    @Override
-    public Optional<Evaluation> getByCompositionId(UUID compositionId) {
-        return evaluationRepository.findByCompositionId(compositionId);
+        throw new RuntimeException("LanguageTool returned no matches");
     }
 
     /**

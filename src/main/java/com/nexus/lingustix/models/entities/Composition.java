@@ -1,6 +1,7 @@
 package com.nexus.lingustix.models.entities;
 
 import com.nexus.lingustix.components.CompositionEntityListener;
+import com.nexus.lingustix.models.responses.CorrectionsResponse;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -25,9 +26,6 @@ public class Composition {
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
-
-    @OneToOne(mappedBy = "composition", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Evaluation evaluation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id")
