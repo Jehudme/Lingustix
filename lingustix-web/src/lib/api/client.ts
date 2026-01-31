@@ -4,7 +4,17 @@ import type { LoginResponse } from '@/types';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-// In-memory token storage (never use localStorage for sensitive tokens)
+/**
+ * In-memory token storage for client-side only.
+ * 
+ * SECURITY NOTE: This module is only imported by client components ('use client').
+ * Module-level variables are safe here because:
+ * 1. Each browser tab has its own JavaScript context
+ * 2. These variables are never accessed in server components or API routes
+ * 3. This prevents XSS attacks that could access localStorage
+ * 
+ * For server-side auth, use HTTP-only cookies instead.
+ */
 let accessToken: string | null = null;
 let tokenExpirationDate: Date | null = null;
 let isRefreshing = false;

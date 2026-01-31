@@ -181,9 +181,6 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
             focus:outline-none focus:ring-0 border-none
             placeholder:text-slate-600
             caret-indigo-500
-            [&::-webkit-spell-check]:hidden
-            [-webkit-text-decoration:none]
-            [text-decoration:none]
           "
           placeholder="Start writing..."
           style={{
