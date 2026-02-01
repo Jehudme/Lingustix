@@ -88,3 +88,13 @@ textarea,
 .animate-pulse-save {
   animation: pulse-save 1.5s ease-in-out infinite;
 }
+
+/* Utility to hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
