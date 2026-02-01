@@ -32,6 +32,14 @@ export interface CompositionIndex {
   ownerId: string; // UUID
 }
 
+export interface CompositionVersionDTO {
+  commitId: string;
+  timestamp: string; // ISO 8601 date string from LocalDateTime
+  author: string;
+  title: string;
+  content: string;
+}
+
 // API Request Types
 export interface LoginRequest {
   identifier: string;
