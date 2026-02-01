@@ -8,6 +8,7 @@ import com.nexus.lingustix.models.requests.CompositionUpdateTitleRequest;
 import com.nexus.lingustix.models.responses.CompositionResponse;
 import com.nexus.lingustix.services.AccountService;
 import com.nexus.lingustix.services.CompositionService;
+import com.nexus.lingustix.services.impl.CompositionServiceImpl.CompositionVersionDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -74,5 +76,14 @@ public class CompositionController {
     public ResponseEntity<Page<UUID>> getAllIds(@PageableDefault(size = 20) Pageable pageable) {
         UUID ownerId = accountService.getAuthenticatedAccountId();
         return ResponseEntity.ok(compositionService.getIdsByOwner(ownerId, pageable));
+    }
+
+    @GetMapping("/{id}/versions")
+    public ResponseEntity<List<CompositionVersionDTO>> getVersions(@PathVariable UUID id) {
+        if (!compositionService.verifyOwnership(id, accountService.getAuthenticatedAccountId()))
+            throw new GlobalExceptionComponent.UnauthorizedException("You do not have permission to access this composition.");
+
+        List<CompositionVersionDTO> versions = compositionService.getHistory(id);
+        return ResponseEntity.ok(versions);
     }
 }

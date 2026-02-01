@@ -1,6 +1,7 @@
 package com.nexus.lingustix.services;
 
 import com.nexus.lingustix.models.entities.Composition;
+import com.nexus.lingustix.services.impl.CompositionServiceImpl.CompositionVersionDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,4 +22,5 @@ public interface CompositionService {
     List<UUID> getByOwner(UUID ownerId);
     Page<UUID> getByOwner(UUID ownerId, Pageable pageable);
 
+    List<CompositionVersionDTO> getHistory(UUID compositionId);
 }
