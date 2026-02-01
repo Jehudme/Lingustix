@@ -67,15 +67,13 @@ public class SecurityConfig {
 
     // 2. Define the CORS configuration source
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() throws UnknownHostException {
+    public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 1. Always allow localhost for development
-        List<String> allowedOrigins = new ArrayList<>();
-        configuration.setAllowedOrigins(List.of("*"));
+        // FIX: Use Patterns + Wildcard to allow the Next.js proxy to connect
+        configuration.setAllowedOriginPatterns(List.of("*"));
 
-        // 3. Set the allowed origins
-        configuration.setAllowedOrigins(allowedOrigins);
+        // Remove the lines creating 'allowedOrigins' list and overwriting configuration
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

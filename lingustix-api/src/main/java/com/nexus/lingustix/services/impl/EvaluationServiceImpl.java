@@ -34,7 +34,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 
         LanguageToolResponse response = restClient.post()
                 .uri(languageToolUrl + "/check")
-                .body("text=" + composition.getContent() + " &language=auto")
+                .body("text=" + composition.getContent() + "&language=auto")
                 .header("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
                 .retrieve()
                 .body(LanguageToolResponse.class);

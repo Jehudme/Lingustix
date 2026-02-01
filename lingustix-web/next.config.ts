@@ -1,9 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
-  images: {
-    unoptimized: true,
+  output: "standalone",
+
+  // ADD THIS SECTION
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://app:8080/:path*',
+      },
+    ];
   },
 };
 
