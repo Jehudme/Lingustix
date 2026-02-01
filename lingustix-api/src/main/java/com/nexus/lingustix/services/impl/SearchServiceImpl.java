@@ -36,6 +36,22 @@ public class SearchServiceImpl implements SearchService {
     }
 
     @Override
+    public List<CompositionIndex> fuzzySearchCompositions(String query, UUID ownerId) {
+        if (ownerId == null) {
+            return compositionSearchRepository.fuzzySearchByTitleOrContent(query);
+        }
+        return compositionSearchRepository.fuzzySearchByTitleOrContentAndOwnerId(query, ownerId);
+    }
+
+    @Override
+    public Page<CompositionIndex> fuzzySearchCompositions(String query, UUID ownerId, Pageable pageable) {
+        if (ownerId == null) {
+            return compositionSearchRepository.fuzzySearchByTitleOrContent(query, pageable);
+        }
+        return compositionSearchRepository.fuzzySearchByTitleOrContentAndOwnerId(query, ownerId, pageable);
+    }
+
+    @Override
     public void reindexComposition(UUID id) {
         compositionRepository.findById(id).ifPresent(composition -> {
             CompositionIndex index = CompositionIndex.builder()

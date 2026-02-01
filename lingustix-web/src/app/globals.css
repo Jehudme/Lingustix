@@ -98,3 +98,73 @@ textarea,
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+/* ========================================
+   Tiptap Editor Styles
+   ======================================== */
+
+/* Main editor content area */
+.zen-editor-content {
+  outline: none;
+  min-height: 100%;
+  caret-color: #6366f1; /* indigo-500 */
+}
+
+/* Placeholder styling for empty editor */
+.zen-editor-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #64748b; /* slate-500 */
+  pointer-events: none;
+  height: 0;
+}
+
+/* Grammar error highlighting via ProseMirror decorations */
+.grammar-error {
+  background-color: rgba(245, 158, 11, 0.2); /* amber-500/20 */
+  border-bottom: 2px solid rgba(245, 158, 11, 0.5); /* amber-500/50 */
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.grammar-error:hover {
+  background-color: rgba(245, 158, 11, 0.35); /* amber-500/35 */
+}
+
+/* Style error highlighting */
+.style-error {
+  background-color: rgba(59, 130, 246, 0.2); /* blue-500/20 */
+  border-bottom: 2px solid rgba(59, 130, 246, 0.5); /* blue-500/50 */
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.style-error:hover {
+  background-color: rgba(59, 130, 246, 0.35); /* blue-500/35 */
+}
+
+/* Spelling error highlighting */
+.spelling-error {
+  background-color: rgba(239, 68, 68, 0.2); /* red-500/20 */
+  border-bottom: 2px solid rgba(239, 68, 68, 0.5); /* red-500/50 */
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.spelling-error:hover {
+  background-color: rgba(239, 68, 68, 0.35); /* red-500/35 */
+}
+
+/* Ensure ProseMirror content renders correctly */
+.ProseMirror {
+  outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.ProseMirror p {
+  margin: 0;
+}

@@ -1,11 +1,14 @@
 'use client';
 
-import { useRef, useEffect, useCallback, useMemo } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
 import { useEditorStore, useSettingsStore, calculateWordCount, calculateCharacterCount, calculateReadingTime, calculateErrorDensity } from '@/lib/stores';
 import { useDebounce } from '@/lib/hooks';
 import { useToast } from '@/components/ui';
-import type { Correction } from '@/types';
+import { GrammarHighlightExtension } from './GrammarHighlightExtension';
 
 // Constants for debounce timings
 const AUTO_SAVE_DELAY = 2000; // 2 seconds for auto-save
@@ -15,16 +18,7 @@ interface ZenEditorProps {
   compositionId: string;
 }
 
-interface HighlightRange {
-  start: number;
-  end: number;
-  type: 'grammar' | 'style' | 'spelling';
-  correction: Correction;
-}
-
 export function ZenEditor({ compositionId }: ZenEditorProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { showToast } = useToast();
   const { autoSaveInterval } = useSettingsStore();
@@ -45,6 +39,79 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     clearFocusPosition,
   } = useEditorStore();
 
+  // Configure Tiptap editor with extensions
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        // Disable formatting marks for a clean writing experience
+        bold: false,
+        italic: false,
+        strike: false,
+        code: false,
+        codeBlock: false,
+        blockquote: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        heading: false,
+        horizontalRule: false,
+      }),
+      Placeholder.configure({
+        placeholder: 'Start writing...',
+        emptyNodeClass: 'is-editor-empty',
+      }),
+      GrammarHighlightExtension.configure({
+        corrections: corrections,
+      }),
+    ],
+    content: content,
+    editorProps: {
+      attributes: {
+        class: 'zen-editor-content',
+        spellcheck: 'false',
+        autocomplete: 'off',
+        autocorrect: 'off',
+        autocapitalize: 'off',
+        'data-gramm': 'false',
+        'data-gramm_editor': 'false',
+        'data-enable-grammarly': 'false',
+      },
+    },
+    onUpdate: ({ editor }) => {
+      // Get plain text content from the editor
+      const newContent = editor.getText();
+      setContent(newContent);
+    },
+  });
+
+  // Update editor content when external content changes (e.g., on load)
+  useEffect(() => {
+    if (editor && content !== editor.getText()) {
+      // Preserve cursor position when setting content
+      const { from, to } = editor.state.selection;
+      editor.commands.setContent(content, { emitUpdate: false });
+      // Try to restore selection if within bounds
+      const docLength = editor.state.doc.content.size;
+      if (from <= docLength && to <= docLength) {
+        editor.commands.setTextSelection({ from, to });
+      }
+    }
+  }, [editor, content]);
+
+  // Update grammar highlighting when corrections change
+  useEffect(() => {
+    if (editor) {
+      // Reconfigure the extension with new corrections
+      editor.extensionManager.extensions
+        .filter((ext) => ext.name === 'grammarHighlight')
+        .forEach((ext) => {
+          ext.options.corrections = corrections;
+        });
+      // Force a state update to recalculate decorations
+      editor.view.dispatch(editor.state.tr);
+    }
+  }, [editor, corrections]);
+
   // Load composition on mount
   useEffect(() => {
     loadComposition(compositionId).catch(() => {
@@ -52,62 +119,32 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     });
   }, [compositionId, loadComposition, showToast]);
 
-  // Handle focusPosition changes - focus and scroll textarea to the issue position
+  // Handle focusPosition changes - focus and scroll editor to the issue position
   useEffect(() => {
-    if (focusPosition && textareaRef.current) {
-      const textarea = textareaRef.current;
-      textarea.focus();
-      textarea.setSelectionRange(focusPosition.start, focusPosition.end);
+    if (focusPosition && editor) {
+      editor.commands.focus();
+      // Adjust for ProseMirror's 1-based position offset
+      const from = focusPosition.start + 1;
+      const to = focusPosition.end + 1;
+      const docSize = editor.state.doc.content.size;
       
-      // Use a hidden mirror element to calculate accurate scroll position
-      // This handles text wrapping correctly
-      const mirror = document.createElement('div');
-      const computedStyle = getComputedStyle(textarea);
+      if (from > 0 && to <= docSize + 1) {
+        editor.commands.setTextSelection({ from, to });
+        // Scroll to the selection
+        const editorElement = editor.view.dom;
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          const editorRect = editorElement.getBoundingClientRect();
+          const scrollTop = rect.top - editorRect.top + editorElement.scrollTop - editorElement.clientHeight / 2;
+          editorElement.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' });
+        }
+      }
       
-      // Copy all relevant styles to the mirror
-      mirror.style.cssText = `
-        position: absolute;
-        visibility: hidden;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        width: ${textarea.clientWidth}px;
-        font-family: ${computedStyle.fontFamily};
-        font-size: ${computedStyle.fontSize};
-        line-height: ${computedStyle.lineHeight};
-        padding: ${computedStyle.padding};
-        border: ${computedStyle.border};
-        box-sizing: ${computedStyle.boxSizing};
-      `;
-      
-      // Insert text up to the focus position
-      const textBefore = content.slice(0, focusPosition.start);
-      mirror.textContent = textBefore;
-      
-      // Add a marker element at the cursor position
-      const marker = document.createElement('span');
-      marker.textContent = '|';
-      mirror.appendChild(marker);
-      
-      document.body.appendChild(mirror);
-      
-      // Calculate scroll position to center the marker with 100px vertical offset
-      const markerTop = marker.offsetTop;
-      const viewportPadding = 100; // Extra padding to ensure visibility
-      const targetScrollTop = Math.max(0, markerTop - (textarea.clientHeight / 2) + viewportPadding);
-      
-      // Smooth scroll to the calculated position
-      textarea.scrollTo({
-        top: targetScrollTop,
-        behavior: 'smooth'
-      });
-      
-      document.body.removeChild(mirror);
-      
-      // Clear the focus position after handling
       clearFocusPosition();
     }
-  }, [focusPosition, content, clearFocusPosition]);
+  }, [focusPosition, editor, clearFocusPosition]);
 
   // Use the smaller of autoSaveInterval or AUTO_SAVE_DELAY (2 seconds)
   const effectiveAutoSaveInterval = Math.min(autoSaveInterval, AUTO_SAVE_DELAY);
@@ -185,131 +222,16 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     return { wordCount, characterCount, readingTime, errorDensity };
   }, [content, corrections]);
 
-  // Convert corrections to highlight ranges
-  const highlightRanges: HighlightRange[] = useMemo(() => {
-    return corrections.map((correction) => ({
-      start: correction.startOffset,
-      end: correction.startOffset + correction.length,
-      type: 'grammar' as const, // Default to grammar; could be extended
-      correction,
-    }));
-  }, [corrections]);
-
-  // Handle content change
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setContent(e.target.value);
-    },
-    [setContent]
-  );
-
-  // Sync scroll between textarea and overlay
-  const handleScroll = useCallback(() => {
-    if (textareaRef.current && overlayRef.current) {
-      overlayRef.current.scrollTop = textareaRef.current.scrollTop;
-      overlayRef.current.scrollLeft = textareaRef.current.scrollLeft;
-    }
-  }, []);
-
-  // Render text with highlights
-  const renderHighlightedContent = useCallback(() => {
-    if (highlightRanges.length === 0) {
-      return <span className="invisible whitespace-pre-wrap">{content || ' '}</span>;
-    }
-
-    const elements: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    // Sort ranges by start position
-    const sortedRanges = [...highlightRanges].sort((a, b) => a.start - b.start);
-
-    sortedRanges.forEach((range, index) => {
-      // Add text before the highlight
-      if (range.start > lastIndex) {
-        elements.push(
-          <span key={`text-${index}`} className="invisible">
-            {content.slice(lastIndex, range.start)}
-          </span>
-        );
-      }
-
-      // Add highlighted text
-      const highlightClass =
-        range.type === 'grammar'
-          ? 'bg-amber-500/20 border-b-2 border-amber-500/50'
-          : range.type === 'style'
-          ? 'bg-blue-500/20 border-b-2 border-blue-500/50'
-          : 'bg-red-500/20 border-b-2 border-red-500/50';
-
-      elements.push(
-        <span
-          key={`highlight-${index}`}
-          className={`relative rounded-sm ${highlightClass}`}
-          title={range.correction.explanation}
-        >
-          <span className="invisible">{content.slice(range.start, range.end)}</span>
-        </span>
-      );
-
-      lastIndex = range.end;
-    });
-
-    // Add remaining text
-    if (lastIndex < content.length) {
-      elements.push(
-        <span key="text-end" className="invisible">
-          {content.slice(lastIndex)}
-        </span>
-      );
-    }
-
-    return elements;
-  }, [content, highlightRanges]);
-
   return (
     <div className="flex flex-col h-full">
-      {/* Editor Container */}
+      {/* Tiptap Editor Container */}
       <div className="flex-1 relative overflow-hidden">
-        {/* Highlight Overlay - uses overflow-auto for scroll sync but hides scrollbar */}
-        <div
-          ref={overlayRef}
-          className="absolute inset-0 pointer-events-none overflow-auto p-6 whitespace-pre-wrap break-words font-mono text-lg leading-relaxed scrollbar-hide"
-          aria-hidden="true"
-          style={{
-            // Hide scrollbar but allow scrolling for proper sync with textarea
-            scrollbarWidth: 'none', // Firefox
-            msOverflowStyle: 'none', // IE/Edge
-          }}
-        >
-          {renderHighlightedContent()}
-        </div>
-
-        {/* Textarea - with native spellcheck suppressed */}
-        <textarea
-          ref={textareaRef}
-          value={content}
-          onChange={handleChange}
-          onScroll={handleScroll}
-          spellCheck={false}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          data-gramm="false"
-          data-gramm_editor="false"
-          data-enable-grammarly="false"
+        <EditorContent
+          editor={editor}
           className="
-            absolute inset-0 w-full h-full resize-none p-6 
+            absolute inset-0 w-full h-full overflow-auto p-6
             bg-transparent text-slate-100 font-mono text-lg leading-relaxed
-            focus:outline-none focus:ring-0 border-none
-            placeholder:text-slate-600
-            caret-indigo-500
           "
-          placeholder="Start writing..."
-          style={{
-            // Prevent native squiggles
-            WebkitTextFillColor: 'inherit',
-            textDecoration: 'none',
-          }}
         />
       </div>
 
