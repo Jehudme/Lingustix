@@ -27,6 +27,7 @@ interface EditorActions {
   setError: (error: string | null) => void;
   focusAtPosition: (start: number, end: number) => void;
   clearFocusPosition: () => void;
+  restoreVersion: (content: string, title: string) => void;
 }
 
 type EditorStore = EditorState & EditorActions;
@@ -204,6 +205,20 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
 
   clearFocusPosition: () => {
     set({ focusPosition: null });
+  },
+
+  restoreVersion: (restoredContent: string, restoredTitle: string) => {
+    const { composition } = get();
+    if (composition) {
+      set({
+        content: restoredContent,
+        composition: { ...composition, title: restoredTitle, content: restoredContent },
+        hasUnsavedChanges: true,
+        // Clear existing corrections since they were calculated for the previous content
+        // and would have incorrect offsets for the restored content
+        corrections: [],
+      });
+    }
   },
 }));
 

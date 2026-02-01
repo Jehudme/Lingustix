@@ -11,6 +11,7 @@ import type {
   CompositionResponse,
   CompositionUpdateContentRequest,
   CompositionUpdateTitleRequest,
+  CompositionVersionDTO,
   EvaluationCreateRequest,
   Correction,
   CompositionIndex,
@@ -97,6 +98,11 @@ export const compositionApi = {
 
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/compositions/${id}`);
+  },
+
+  getVersions: async (id: string): Promise<CompositionVersionDTO[]> => {
+    const response = await apiClient.get<CompositionVersionDTO[]>(`/compositions/${id}/versions`);
+    return response.data;
   },
 };
 

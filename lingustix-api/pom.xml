@@ -121,6 +121,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+
+        <!-- JaVers for entity versioning -->
+        <dependency>
+            <groupId>org.javers</groupId>
+            <artifactId>javers-spring-boot-starter-sql</artifactId>
+            <version>7.8.0</version>
+        </dependency>
     </dependencies>
 
     <build>

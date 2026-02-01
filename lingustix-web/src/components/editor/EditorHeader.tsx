@@ -3,10 +3,11 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronLeft, Download, Save, FileText, Type, Zap } from 'lucide-react';
+import { Check, ChevronLeft, Download, Save, FileText, Type, Zap, History } from 'lucide-react';
 import { useEditorStore } from '@/lib/stores';
 import { Breadcrumbs, type BreadcrumbItem } from '@/components/layout';
 import { Button, Switch, useToast } from '@/components/ui';
+import { VersionHistoryModal } from './VersionHistoryModal';
 
 export function EditorHeader() {
   const router = useRouter();
@@ -20,9 +21,11 @@ export function EditorHeader() {
     hasUnsavedChanges,
     isLiveMode,
     setLiveMode,
+    restoreVersion,
   } = useEditorStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   
   // Use composition title directly as the input value when editing
@@ -84,6 +87,10 @@ export function EditorHeader() {
     URL.revokeObjectURL(url);
     setShowExportMenu(false);
     showToast('success', `Exported as ${format}`);
+  };
+
+  const handleRestoreVersion = (restoredContent: string, restoredTitle: string) => {
+    restoreVersion(restoredContent, restoredTitle);
   };
 
   const breadcrumbs: BreadcrumbItem[] = [
@@ -160,6 +167,16 @@ export function EditorHeader() {
           <span className="hidden sm:inline">{hasUnsavedChanges ? 'Save' : 'Saved'}</span>
         </Button>
 
+        {/* History Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowHistoryModal(true)}
+        >
+          <History className="w-4 h-4" />
+          <span className="hidden sm:inline">History</span>
+        </Button>
+
         {/* Export Button */}
         <div className="relative">
           <Button
@@ -198,6 +215,16 @@ export function EditorHeader() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Version History Modal */}
+      {composition && (
+        <VersionHistoryModal
+          isOpen={showHistoryModal}
+          onClose={() => setShowHistoryModal(false)}
+          compositionId={composition.id}
+          onRestoreVersion={handleRestoreVersion}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ package com.nexus.lingustix.repositories;
 
 import com.nexus.lingustix.models.entities.Account;
 import com.nexus.lingustix.models.entities.Composition;
+import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,6 +14,7 @@ import java.util.UUID;
 import java.util.Optional;
 
 @Repository
+@JaversSpringDataAuditable
 public interface CompositionRepository extends JpaRepository<Composition, UUID> {
     @Query("SELECT c.id FROM Composition c WHERE c.owner.id = :ownerId")
     Page<UUID> findIdsByOwnerId(UUID ownerId, Pageable pageable);
