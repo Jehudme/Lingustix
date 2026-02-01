@@ -109,7 +109,9 @@ public class CompositionServiceImpl implements CompositionService {
         }
 
         // Query JaVers for shadows (reconstructed entity at each point in time)
-        // Limit to 100 to prevent fetching thousands of rows at once
+        // Limit to 100 most recent versions to prevent performance issues.
+        // For compositions with extensive history, consider implementing pagination
+        // in the future via skip/limit parameters exposed through the API.
         List<Shadow<Composition>> shadows = javers.findShadows(
                 QueryBuilder.byInstanceId(compositionId, Composition.class)
                         .limit(100)

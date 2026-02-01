@@ -63,9 +63,15 @@ export function VersionHistoryModal({
     });
   };
 
+  /**
+   * Truncates content to a maximum length, trying to break at word boundaries.
+   */
   const truncateContent = (content: string, maxLength: number = 150) => {
     if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength) + '...';
+    // Try to find a space near the maxLength to avoid breaking words
+    const lastSpace = content.lastIndexOf(' ', maxLength);
+    const breakPoint = lastSpace > maxLength * 0.7 ? lastSpace : maxLength;
+    return content.substring(0, breakPoint) + '...';
   };
 
   return (

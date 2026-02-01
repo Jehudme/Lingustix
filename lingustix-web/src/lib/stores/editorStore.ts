@@ -214,6 +214,8 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
         content: restoredContent,
         composition: { ...composition, title: restoredTitle, content: restoredContent },
         hasUnsavedChanges: true,
+        // Clear existing corrections since they were calculated for the previous content
+        // and would have incorrect offsets for the restored content
         corrections: [],
       });
     }
