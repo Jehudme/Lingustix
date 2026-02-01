@@ -84,9 +84,14 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     },
   });
 
+  // Track the last content we synced to the editor to prevent loops
+  const lastSyncedContentRef = useRef<string>(content);
+
   // Update editor content when external content changes (e.g., on load)
   useEffect(() => {
-    if (editor && content !== editor.getText()) {
+    if (editor && content !== lastSyncedContentRef.current) {
+      // Only update if the content we're setting differs from what we last synced
+      lastSyncedContentRef.current = content;
       // Preserve cursor position when setting content
       const { from, to } = editor.state.selection;
       editor.commands.setContent(content, { emitUpdate: false });
@@ -101,14 +106,32 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
   // Update grammar highlighting when corrections change
   useEffect(() => {
     if (editor) {
-      // Reconfigure the extension with new corrections
-      editor.extensionManager.extensions
-        .filter((ext) => ext.name === 'grammarHighlight')
-        .forEach((ext) => {
-          ext.options.corrections = corrections;
-        });
-      // Force a state update to recalculate decorations
-      editor.view.dispatch(editor.state.tr);
+      // Reconfigure the extension with new corrections using setOptions
+      // This is the proper way to update extension options in Tiptap
+      editor.setOptions({
+        extensions: [
+          StarterKit.configure({
+            bold: false,
+            italic: false,
+            strike: false,
+            code: false,
+            codeBlock: false,
+            blockquote: false,
+            bulletList: false,
+            orderedList: false,
+            listItem: false,
+            heading: false,
+            horizontalRule: false,
+          }),
+          Placeholder.configure({
+            placeholder: 'Start writing...',
+            emptyNodeClass: 'is-editor-empty',
+          }),
+          GrammarHighlightExtension.configure({
+            corrections: corrections,
+          }),
+        ],
+      });
     }
   }, [editor, corrections]);
 
