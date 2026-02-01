@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/lib/stores';
+import { getErrorMessage } from '@/lib/utils';
 import { Button, Input, useToast } from '@/components/ui';
 import { PenTool, LogIn } from 'lucide-react';
 
@@ -63,8 +64,9 @@ export function LoginForm() {
       await login(formData);
       showToast('success', 'Welcome back!');
       router.push('/dashboard');
-    } catch {
-      showToast('error', 'Login failed. Please check your credentials.');
+    } catch (error) {
+      const errorMessage = getErrorMessage(error, 'login');
+      showToast('error', errorMessage);
     }
   };
 

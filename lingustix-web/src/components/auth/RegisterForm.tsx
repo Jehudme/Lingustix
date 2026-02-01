@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { accountApi } from '@/lib/api';
+import { getErrorMessage } from '@/lib/utils';
 import { Button, Input, useToast } from '@/components/ui';
 import { PenTool, UserPlus } from 'lucide-react';
 
@@ -63,8 +64,9 @@ export function RegisterForm() {
       });
       showToast('success', 'Account created successfully! Please sign in.');
       router.push('/auth/login');
-    } catch {
-      showToast('error', 'Registration failed. Please try again.');
+    } catch (error) {
+      const errorMessage = getErrorMessage(error, 'register');
+      showToast('error', errorMessage);
     } finally {
       setIsLoading(false);
     }
