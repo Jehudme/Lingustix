@@ -354,10 +354,10 @@ function StatusBar({
   };
 
   return (
-    <div className="flex items-center justify-between px-6 py-3 border-t border-slate-800 bg-slate-900/50 text-xs text-slate-500">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-6 py-2 sm:py-3 border-t border-slate-800 bg-slate-900/50 text-xs text-slate-500 gap-1 sm:gap-0">
+      <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
         <span>{wordCount} words</span>
-        <span>{characterCount} characters</span>
+        <span className="hidden sm:inline">{characterCount} characters</span>
         <span>{readingTime} min read</span>
         {/* Only show error count when live mode is enabled */}
         {isLiveMode && errorCount > 0 && (
@@ -367,7 +367,7 @@ function StatusBar({
         )}
       </div>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         {/* Analyzing indicator */}
         {isEvaluating && (
           <motion.span

@@ -139,7 +139,7 @@ export function CompositionList() {
                         e.stopPropagation();
                         setActiveMenu(activeMenu === composition.id ? null : composition.id);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-slate-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1.5 rounded-lg hover:bg-slate-700 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     >
                       <MoreVertical className="w-4 h-4 text-slate-400" />
                     </button>

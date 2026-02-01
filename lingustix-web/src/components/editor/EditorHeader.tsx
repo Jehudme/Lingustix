@@ -92,17 +92,19 @@ export function EditorHeader() {
   ];
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950">
-      <div className="flex items-center gap-4">
+    <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-slate-800 bg-slate-950">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
         <button
           onClick={() => router.push('/dashboard')}
-          className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0"
         >
           <ChevronLeft className="w-5 h-5 text-slate-400" />
         </button>
 
-        <div className="flex flex-col gap-1">
-          <Breadcrumbs items={breadcrumbs} />
+        <div className="flex flex-col gap-1 min-w-0">
+          <div className="hidden sm:block">
+            <Breadcrumbs items={breadcrumbs} />
+          </div>
           
           {isEditingTitle ? (
             <input
@@ -112,13 +114,13 @@ export function EditorHeader() {
               onChange={(e) => setLocalTitleInput(e.target.value)}
               onBlur={handleTitleSave}
               onKeyDown={handleTitleKeyDown}
-              className="text-xl font-bold bg-transparent border-b-2 border-indigo-500 text-slate-100 focus:outline-none px-0 py-1"
+              className="text-base sm:text-xl font-bold bg-transparent border-b-2 border-indigo-500 text-slate-100 focus:outline-none px-0 py-1 w-full"
               maxLength={255}
             />
           ) : (
             <button
               onClick={handleStartEditing}
-              className="text-xl font-bold text-slate-100 hover:text-indigo-400 transition-colors text-left"
+              className="text-base sm:text-xl font-bold text-slate-100 hover:text-indigo-400 transition-colors text-left truncate"
             >
               {composition?.title || 'Untitled'}
             </button>
@@ -126,11 +128,11 @@ export function EditorHeader() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
         {/* Live Correction Toggle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Zap className={`w-4 h-4 ${isLiveMode ? 'text-indigo-400' : 'text-slate-500'}`} />
-          <span className={`text-sm ${isLiveMode ? 'text-slate-200' : 'text-slate-500'}`}>
+          <span className={`hidden sm:inline text-sm ${isLiveMode ? 'text-slate-200' : 'text-slate-500'}`}>
             Live Correction
           </span>
           <Switch
@@ -140,7 +142,7 @@ export function EditorHeader() {
           />
         </div>
 
-        <div className="w-px h-6 bg-slate-700" />
+        <div className="hidden sm:block w-px h-6 bg-slate-700" />
 
         {/* Save Button */}
         <Button
@@ -155,7 +157,7 @@ export function EditorHeader() {
           ) : (
             <Check className="w-4 h-4 text-green-500" />
           )}
-          {hasUnsavedChanges ? 'Save' : 'Saved'}
+          <span className="hidden sm:inline">{hasUnsavedChanges ? 'Save' : 'Saved'}</span>
         </Button>
 
         {/* Export Button */}
@@ -166,7 +168,7 @@ export function EditorHeader() {
             onClick={() => setShowExportMenu(!showExportMenu)}
           >
             <Download className="w-4 h-4" />
-            Export
+            <span className="hidden sm:inline">Export</span>
           </Button>
 
           <AnimatePresence>
