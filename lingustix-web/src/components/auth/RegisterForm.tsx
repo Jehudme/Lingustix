@@ -4,11 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { AxiosError } from 'axios';
 import { accountApi } from '@/lib/api';
+import { getErrorMessage } from '@/lib/utils';
 import { Button, Input, useToast } from '@/components/ui';
 import { PenTool, UserPlus } from 'lucide-react';
-import type { ApiError } from '@/types';
 
 export function RegisterForm() {
   const router = useRouter();
@@ -51,54 +50,6 @@ export function RegisterForm() {
     return Object.keys(errors).length === 0;
   };
 
-  const getErrorMessage = (error: unknown): string => {
-    if (error instanceof AxiosError) {
-      const apiError = error.response?.data as ApiError | undefined;
-      const status = error.response?.status;
-
-      // Handle specific error messages from the API
-      if (apiError?.message) {
-        // Make conflict messages more user-friendly
-        if (apiError.message.includes('Email already in use')) {
-          return 'This email address is already registered. Please use a different email or sign in.';
-        }
-        if (apiError.message.includes('Username already in use')) {
-          return 'This username is already taken. Please choose a different username.';
-        }
-        return apiError.message;
-      }
-
-      // Handle HTTP status codes with user-friendly messages
-      switch (status) {
-        case 400:
-          return 'Invalid registration data. Please check your information.';
-        case 409:
-          return 'An account with this email or username already exists.';
-        case 422:
-          return 'Please check your information and try again.';
-        case 429:
-          return 'Too many registration attempts. Please try again later.';
-        case 500:
-        case 502:
-        case 503:
-          return 'Server is temporarily unavailable. Please try again later.';
-        default:
-          break;
-      }
-
-      // Handle network errors
-      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-        return 'Unable to connect to the server. Please check your internet connection.';
-      }
-
-      if (error.code === 'ECONNABORTED') {
-        return 'Request timed out. Please try again.';
-      }
-    }
-
-    return 'Registration failed. Please try again.';
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -114,7 +65,7 @@ export function RegisterForm() {
       showToast('success', 'Account created successfully! Please sign in.');
       router.push('/auth/login');
     } catch (error) {
-      const errorMessage = getErrorMessage(error);
+      const errorMessage = getErrorMessage(error, 'register');
       showToast('error', errorMessage);
     } finally {
       setIsLoading(false);
