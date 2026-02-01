@@ -27,4 +27,15 @@ public class SearchController {
         UUID ownerId = accountService.getAuthenticatedAccountId();
         return ResponseEntity.ok(searchService.searchCompositions(query, ownerId, pageable));
     }
+
+    /**
+     * Fuzzy search endpoint that allows for typos in the search query.
+     * This is useful when users misspell words in their search.
+     */
+    @GetMapping("/compositions/fuzzy")
+    public ResponseEntity<Page<CompositionIndex>> fuzzySearchCompositions(@RequestParam String query,
+                                                                          @PageableDefault(size = 20) Pageable pageable) {
+        UUID ownerId = accountService.getAuthenticatedAccountId();
+        return ResponseEntity.ok(searchService.fuzzySearchCompositions(query, ownerId, pageable));
+    }
 }

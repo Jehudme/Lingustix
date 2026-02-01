@@ -10,6 +10,19 @@ import java.util.UUID;
 public interface SearchService {
     List<CompositionIndex> searchCompositions(String query, UUID ownerId);
     Page<CompositionIndex> searchCompositions(String query, UUID ownerId, Pageable pageable);
+    
+    /**
+     * Fuzzy search for compositions allowing for typos in the query.
+     * Searches both title and content fields.
+     */
+    List<CompositionIndex> fuzzySearchCompositions(String query, UUID ownerId);
+    
+    /**
+     * Paginated fuzzy search for compositions allowing for typos in the query.
+     * Searches both title and content fields.
+     */
+    Page<CompositionIndex> fuzzySearchCompositions(String query, UUID ownerId, Pageable pageable);
+    
     void reindexComposition(UUID id);
     void rebuildIndex();
 }
