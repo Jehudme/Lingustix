@@ -3,6 +3,7 @@ package com.nexus.lingustix.services.impl;
 import com.nexus.lingustix.components.GlobalExceptionComponent.ResourceNotFoundException;
 import com.nexus.lingustix.models.entities.Account;
 import com.nexus.lingustix.models.entities.Composition;
+import com.nexus.lingustix.models.responses.CompositionVersionDTO;
 import com.nexus.lingustix.repositories.CompositionRepository;
 import com.nexus.lingustix.services.AccountService;
 import com.nexus.lingustix.services.CompositionService;
@@ -16,7 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,17 +29,6 @@ public class CompositionServiceImpl implements CompositionService {
     private final CompositionRepository compositionRepository;
     private final AccountService accountService;
     private final Javers javers;
-
-    /**
-     * DTO representing a version of a Composition at a specific point in time.
-     */
-    public record CompositionVersionDTO(
-            String commitId,
-            LocalDateTime timestamp,
-            String author,
-            String title,
-            String content
-    ) {}
 
     private String getCurrentUserId() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -127,15 +116,19 @@ public class CompositionServiceImpl implements CompositionService {
                         .build()
         );
 
-        // Map shadows to DTOs
+        // Map shadows to DTOs, filtering out any with null entities
         return shadows.stream()
-                .<CompositionVersionDTO>map(shadow -> new CompositionVersionDTO(
-                        shadow.getCommitMetadata().getId().toString(),
-                        shadow.getCommitMetadata().getCommitDate(),
-                        shadow.getCommitMetadata().getAuthor(),
-                        shadow.get().getTitle(),
-                        shadow.get().getContent()
-                ))
+                .filter(shadow -> shadow.get() != null)
+                .map(shadow -> {
+                    Composition entity = shadow.get();
+                    return new CompositionVersionDTO(
+                            shadow.getCommitMetadata().getId().toString(),
+                            shadow.getCommitMetadata().getCommitDate(),
+                            shadow.getCommitMetadata().getAuthor(),
+                            entity.getTitle(),
+                            entity.getContent()
+                    );
+                })
                 .collect(Collectors.toList());
     }
 }

@@ -1,7 +1,7 @@
 package com.nexus.lingustix.services;
 
 import com.nexus.lingustix.models.entities.Composition;
-import com.nexus.lingustix.services.impl.CompositionServiceImpl.CompositionVersionDTO;
+import com.nexus.lingustix.models.responses.CompositionVersionDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
