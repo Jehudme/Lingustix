@@ -10,7 +10,6 @@ import type { Correction } from '@/types';
 // Constants for debounce timings
 const AUTO_SAVE_DELAY = 2000; // 2 seconds for auto-save
 const EVALUATION_DELAY = 1500; // 1.5 seconds for live evaluation
-const DEFAULT_LINE_HEIGHT = 28; // Default line height in pixels for scroll calculation
 
 interface ZenEditorProps {
   compositionId: string;
@@ -60,13 +59,50 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
       textarea.focus();
       textarea.setSelectionRange(focusPosition.start, focusPosition.end);
       
-      // Scroll the textarea to make the selection visible
-      // Calculate the approximate line number and scroll to it
+      // Use a hidden mirror element to calculate accurate scroll position
+      // This handles text wrapping correctly
+      const mirror = document.createElement('div');
+      const computedStyle = getComputedStyle(textarea);
+      
+      // Copy all relevant styles to the mirror
+      mirror.style.cssText = `
+        position: absolute;
+        visibility: hidden;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        width: ${textarea.clientWidth}px;
+        font-family: ${computedStyle.fontFamily};
+        font-size: ${computedStyle.fontSize};
+        line-height: ${computedStyle.lineHeight};
+        padding: ${computedStyle.padding};
+        border: ${computedStyle.border};
+        box-sizing: ${computedStyle.boxSizing};
+      `;
+      
+      // Insert text up to the focus position
       const textBefore = content.slice(0, focusPosition.start);
-      const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || DEFAULT_LINE_HEIGHT;
-      const lines = textBefore.split('\n').length - 1;
-      const scrollTop = Math.max(0, lines * lineHeight - textarea.clientHeight / 2);
-      textarea.scrollTop = scrollTop;
+      mirror.textContent = textBefore;
+      
+      // Add a marker element at the cursor position
+      const marker = document.createElement('span');
+      marker.textContent = '|';
+      mirror.appendChild(marker);
+      
+      document.body.appendChild(mirror);
+      
+      // Calculate scroll position to center the marker with 100px vertical offset
+      const markerTop = marker.offsetTop;
+      const viewportPadding = 100; // Extra padding to ensure visibility
+      const targetScrollTop = Math.max(0, markerTop - (textarea.clientHeight / 2) + viewportPadding);
+      
+      // Smooth scroll to the calculated position
+      textarea.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth'
+      });
+      
+      document.body.removeChild(mirror);
       
       // Clear the focus position after handling
       clearFocusPosition();
@@ -234,11 +270,16 @@ export function ZenEditor({ compositionId }: ZenEditorProps) {
     <div className="flex flex-col h-full">
       {/* Editor Container */}
       <div className="flex-1 relative overflow-hidden">
-        {/* Highlight Overlay */}
+        {/* Highlight Overlay - uses overflow-auto for scroll sync but hides scrollbar */}
         <div
           ref={overlayRef}
-          className="absolute inset-0 pointer-events-none overflow-hidden p-6 whitespace-pre-wrap break-words font-mono text-lg leading-relaxed"
+          className="absolute inset-0 pointer-events-none overflow-auto p-6 whitespace-pre-wrap break-words font-mono text-lg leading-relaxed scrollbar-hide"
           aria-hidden="true"
+          style={{
+            // Hide scrollbar but allow scrolling for proper sync with textarea
+            scrollbarWidth: 'none', // Firefox
+            msOverflowStyle: 'none', // IE/Edge
+          }}
         >
           {renderHighlightedContent()}
         </div>
