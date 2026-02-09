@@ -1,5 +1,4 @@
 services:
-  # Spring Boot App Service
   app:
     build:
       context: ./lingustix-api
