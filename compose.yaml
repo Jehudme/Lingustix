@@ -5,9 +5,6 @@ services:
       context: ./lingustix-api
       dockerfile: Dockerfile
     container_name: lingustix-api
-    ports:
-      - "${SERVER_PORT:-8080}:8080"
-      - "5005:5005"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${SPRING_DATASOURCE_DB:-lingustix_db}
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
@@ -31,8 +28,6 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: lingustix-web
-    ports:
-      - "${WEBSITE_PORT:-3000}:3000"
     depends_on:
       app: { condition: service_healthy }
 
@@ -62,8 +57,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    ports:
-      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -81,8 +74,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 45s
-    ports:
-      - '${ELASTICSEARCH_PORT:-9200}:9200'
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
