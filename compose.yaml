@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     container_name: lingustix-api
     profiles: [ "app" ]
-    env_file:
-      - .env
     ports:
       - "${SERVER_PORT:-8080}:8080"
       - "5005:5005"
